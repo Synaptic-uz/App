@@ -1,10 +1,12 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { connectDB, Campaign, Event, Session } from './db.js';
+import { connectDB, Campaign, Event, Agent, Session } from './db.js';
 import { enrichResponse, loadCampaignCache } from './enrichment.js';
 import { nanoid } from 'nanoid';
-import { embedText } from './embeddings.js';
+import { embedText, cosineSimilarity } from './embeddings.js';
+import { agentAuth, hashApiKey, generateApiKey } from './agentAuth.js';
+import { buildSuggestion } from './suggestion.js';
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -22,7 +24,7 @@ app.use(express.json());
 
 // --- Analytics Cache ---
 let analyticsCache = { data: null, timestamp: 0 };
-const ANALYTICS_CACHE_TTL = 10000; // 10 seconds
+const ANALYTICS_CACHE_TTL = 10000;
 
 async function getCachedAnalytics() {
   if (analyticsCache.data && Date.now() - analyticsCache.timestamp < ANALYTICS_CACHE_TTL) {
@@ -32,14 +34,9 @@ async function getCachedAnalytics() {
   const campaigns = await Campaign.find().lean();
   const campaignIds = campaigns.map(c => c._id);
 
-  const [stats, intentStats] = await Promise.all([
-    Event.aggregate([
-      { $match: { campaign_id: { $in: campaignIds } } },
-      { $group: { _id: { campaign_id: "$campaign_id", type: "$type" }, count: { $sum: 1 } } }
-    ]),
-    Event.aggregate([
-      { $group: { _id: "$intent_type", count: { $sum: 1 }, conversions: { $sum: { $cond: [{ $eq: ["$type", "conversion"] }, 1, 0] } } } }
-    ])
+  const stats = await Event.aggregate([
+    { $match: { campaign_id: { $in: campaignIds } } },
+    { $group: { _id: { campaign_id: "$campaign_id", type: "$type" }, count: { $sum: 1 } } }
   ]);
 
   let totalImpressions = 0, totalClicks = 0, totalConversions = 0;
@@ -70,7 +67,6 @@ async function getCachedAnalytics() {
   const result = {
     campaigns: Object.values(campaignStatsMap),
     overview: { totalImpressions, totalClicks, totalConversions, ctr: ctr.toFixed(2) + '%', conversion_rate: conversionRate.toFixed(2) + '%' },
-    intent_breakdown: intentStats,
   };
 
   analyticsCache = { data: result, timestamp: Date.now() };
@@ -80,11 +76,11 @@ async function getCachedAnalytics() {
 // --- Core Endpoints ---
 
 app.post('/api/enrich', async (req, res) => {
-  const { prompt, session_id } = req.body;
+  const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
   try {
-    const result = await enrichResponse(prompt, session_id);
+    const result = await enrichResponse(prompt);
     res.json(result);
   } catch (error) {
     console.error('Enrich error:', error);
@@ -92,13 +88,183 @@ app.post('/api/enrich', async (req, res) => {
   }
 });
 
+// --- Production B2B Endpoint for AI Agents ---
+
+app.post('/authorized/send_result', agentAuth, async (req, res) => {
+  const { prompt } = req.body;
+  const agent = req.agent;
+
+  if (!prompt) return res.json({ match: false });
+
+  try {
+    const promptLower = prompt.toLowerCase();
+    let bestCampaign = null;
+    let highestScore = -1;
+    const SIMILARITY_THRESHOLD = 0.25;
+
+    const activeCampaigns = await Campaign.find({ active: 1 }).select('+embedding').lean();
+
+    let promptEmbedding = null;
+
+    for (const campaign of activeCampaigns) {
+      let score = 0;
+
+      if (campaign.keywords && campaign.keywords.length > 0) {
+        let keywordMatches = 0;
+        for (const kw of campaign.keywords) {
+          if (promptLower.includes(kw.toLowerCase())) keywordMatches++;
+        }
+        if (keywordMatches > 0) {
+          score = (keywordMatches / campaign.keywords.length) * 0.8;
+        }
+      }
+
+      if (campaign.embedding && campaign.embedding.length > 0) {
+        if (!promptEmbedding) {
+          promptEmbedding = await embedText(prompt);
+        }
+        const vectorScore = cosineSimilarity(promptEmbedding, campaign.embedding);
+        score = Math.max(score, vectorScore);
+      }
+
+      if (score > highestScore) {
+        highestScore = score;
+        bestCampaign = campaign;
+      }
+    }
+
+    if (bestCampaign && highestScore > SIMILARITY_THRESHOLD) {
+      const suggestion = buildSuggestion(bestCampaign);
+      const tracking_url = `${req.protocol}://${req.get('host')}/t/${bestCampaign.tracking_code}?a=${agent.username}`;
+
+      Event.create({
+        campaign_id: bestCampaign._id,
+        agent_id: agent.username,
+        type: 'impression',
+        user_prompt: prompt.substring(0, 500),
+      }).catch(() => {});
+
+      Agent.updateOne({ _id: agent._id }, { $inc: { total_impressions: 1 } }).catch(() => {});
+
+      return res.json({
+        match: true,
+        intent: bestCampaign.category,
+        suggestion,
+        tracking_url,
+        campaign: { name: bestCampaign.name, category: bestCampaign.category }
+      });
+    }
+
+    return res.json({ match: false });
+
+  } catch (error) {
+    console.error('B2B Query Error:', error);
+    return res.json({ match: false });
+  }
+});
+
+// --- Agent Registration ---
+
+app.post('/api/agents/register', async (req, res) => {
+  const { username, owner_email } = req.body;
+
+  if (!username || !owner_email) {
+    return res.status(400).json({ error: 'Username and owner_email are required' });
+  }
+
+  try {
+    const existing = await Agent.findOne({ username });
+    if (existing) return res.status(400).json({ error: 'Username already taken' });
+
+    const api_key = generateApiKey();
+    const api_key_hash = hashApiKey(api_key);
+
+    await Agent.create({ username, owner_email, api_key_hash });
+
+    res.json({
+      message: 'Agent registered. Store your API key — it will not be shown again.',
+      api_key
+    });
+  } catch (error) {
+    console.error('Agent Registration Error:', error);
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+// --- Agent List & Stats ---
+
+app.get('/api/agents', async (req, res) => {
+  try {
+    const agents = await Agent.find().sort({ total_clicks: -1 }).lean();
+    res.json(agents.map(a => ({
+      ...a,
+      api_key_hash: undefined,
+    })));
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch agents' });
+  }
+});
+
+app.get('/api/agents/:username/stats', async (req, res) => {
+  const { username } = req.params;
+  try {
+    const agent = await Agent.findOne({ username }).lean();
+    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    const [events, dailyStats] = await Promise.all([
+      Event.aggregate([
+        { $match: { agent_id: username } },
+        { $group: { _id: "$type", count: { $sum: 1 } } }
+      ]),
+      Event.aggregate([
+        { $match: { agent_id: username, createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
+        { $group: { _id: { date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, type: "$type" }, count: { $sum: 1 } } },
+        { $sort: { "_id.date": 1 } }
+      ])
+    ]);
+
+    let impressions = 0, clicks = 0;
+    for (const e of events) {
+      if (e._id === 'impression') impressions += e.count;
+      if (e._id === 'click') clicks += e.count;
+    }
+
+    const formattedDaily = {};
+    for (const d of dailyStats) {
+      if (!formattedDaily[d._id.date]) formattedDaily[d._id.date] = { date: d._id.date, impressions: 0, clicks: 0 };
+      if (d._id.type === 'impression') formattedDaily[d._id.date].impressions += d.count;
+      if (d._id.type === 'click') formattedDaily[d._id.date].clicks += d.count;
+    }
+
+    res.json({
+      agent: { ...agent, api_key_hash: undefined },
+      totals: { impressions, clicks, ctr: impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) + '%' : '0%' },
+      daily_stats: Object.values(formattedDaily),
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch agent stats' });
+  }
+});
+
+// --- Tracking Link ---
+
 app.get('/t/:code', async (req, res) => {
   const { code } = req.params;
+  const agentId = req.query.a;
+
   try {
-    const campaign = await Campaign.findOne({ tracking_code: code }).select('_id brand_url cpc_rate spent').lean();
+    const campaign = await Campaign.findOne({ tracking_code: code }).select('_id brand_url cpc_rate').lean();
     if (campaign) {
-      Event.create({ campaign_id: campaign._id, type: 'click' }).catch(() => {});
-      Campaign.findByIdAndUpdate(campaign._id, { $inc: { spent: campaign.cpc_rate } }).catch(() => {});
+      Event.create({
+        campaign_id: campaign._id,
+        agent_id: agentId || null,
+        type: 'click'
+      }).catch(() => {});
+
+      if (agentId) {
+        Agent.updateOne({ username: agentId }, { $inc: { total_clicks: 1 } }).catch(() => {});
+      }
+
       return res.redirect(campaign.brand_url);
     }
     res.status(404).send('Invalid tracking link');
@@ -107,12 +273,14 @@ app.get('/t/:code', async (req, res) => {
   }
 });
 
+// --- Conversion Tracking ---
+
 app.post('/api/conversion', async (req, res) => {
   const { session_id, campaign_id, conversion_value, metadata } = req.body;
   if (!session_id || !campaign_id) return res.status(400).json({ error: 'session_id and campaign_id required' });
 
   try {
-    const campaign = await Campaign.findById(campaign_id).select('cpa_percentage cpa_rate spent').lean();
+    const campaign = await Campaign.findById(campaign_id).select('cpa_percentage cpa_rate').lean();
     if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
 
     const cpaAmount = conversion_value ? (conversion_value * campaign.cpa_percentage) / 100 : campaign.cpa_rate;
@@ -126,7 +294,7 @@ app.post('/api/conversion', async (req, res) => {
   }
 });
 
-// --- Analytics (Cached) ---
+// --- Analytics ---
 
 app.get('/api/analytics', async (req, res) => {
   try {
@@ -164,7 +332,7 @@ app.get('/api/intent-stats', async (req, res) => {
   }
 });
 
-// --- B2B Dashboard ---
+// --- B2B Campaign Dashboard ---
 
 app.get('/api/dashboard/:campaignId', async (req, res) => {
   const { campaignId } = req.params;
@@ -175,7 +343,7 @@ app.get('/api/dashboard/:campaignId', async (req, res) => {
     const [events, dailyStats] = await Promise.all([
       Event.aggregate([
         { $match: { campaign_id: campaign._id } },
-        { $group: { _id: { type: "$type", intent: "$intent_type" }, count: { $sum: 1 }, total_conversion_value: { $sum: "$conversion_value" } } }
+        { $group: { _id: "$type", count: { $sum: 1 } } }
       ]),
       Event.aggregate([
         { $match: { campaign_id: campaign._id, createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
@@ -184,15 +352,11 @@ app.get('/api/dashboard/:campaignId', async (req, res) => {
       ])
     ]);
 
-    const intentBreakdown = {};
     let totalImpressions = 0, totalClicks = 0, totalConversions = 0;
-
     for (const e of events) {
-      const intent = e._id.intent || 'unknown';
-      if (!intentBreakdown[intent]) intentBreakdown[intent] = { impressions: 0, clicks: 0, conversions: 0 };
-      if (e._id.type === 'impression') { intentBreakdown[intent].impressions += e.count; totalImpressions += e.count; }
-      if (e._id.type === 'click') { intentBreakdown[intent].clicks += e.count; totalClicks += e.count; }
-      if (e._id.type === 'conversion') { intentBreakdown[intent].conversions += e.count; totalConversions += e.count; }
+      if (e._id === 'impression') totalImpressions += e.count;
+      if (e._id === 'click') totalClicks += e.count;
+      if (e._id === 'conversion') totalConversions += e.count;
     }
 
     const formattedDaily = {};
@@ -214,7 +378,6 @@ app.get('/api/dashboard/:campaignId', async (req, res) => {
         ctr: totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(2) + '%' : '0%',
         conversion_rate: totalClicks > 0 ? ((totalConversions / totalClicks) * 100).toFixed(2) + '%' : '0%',
       },
-      intent_breakdown: intentBreakdown,
       daily_stats: Object.values(formattedDaily),
     });
   } catch (error) {
@@ -234,7 +397,7 @@ app.get('/api/campaigns', async (req, res) => {
 });
 
 app.post('/api/campaigns', async (req, res) => {
-  const { name, category, brand_url, link_text, description, keywords, cpc_rate, cpa_percentage, tone, budget } = req.body;
+  const { name, category, brand_url, link_text, tagline, description, keywords, cpc_rate, cpa_percentage, tone, budget } = req.body;
   const tracking_code = nanoid(10);
 
   try {
@@ -242,13 +405,13 @@ app.post('/api/campaigns', async (req, res) => {
     const embedding = await embedText(promptContext);
 
     await Campaign.create({
-      name, category, brand_url, link_text, tracking_code, embedding,
+      name, category, brand_url, link_text, tagline: tagline || '', tracking_code, embedding,
       description: description || '', keywords: keywords || [],
       cpc_rate: cpc_rate || 0, cpa_percentage: cpa_percentage || 0,
       tone: tone || 'informative', budget: budget || 0, source: 'partner',
     });
 
-    loadCampaignCache(); // Refresh cache
+    loadCampaignCache();
     res.json({ id: tracking_code });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create campaign' });
@@ -288,7 +451,7 @@ app.get('/api/sessions', async (req, res) => {
   }
 });
 
-// --- Cache Invalidation Endpoint ---
+// --- Cache Invalidation ---
 app.post('/api/cache/clear', async (req, res) => {
   analyticsCache = { data: null, timestamp: 0 };
   await loadCampaignCache();

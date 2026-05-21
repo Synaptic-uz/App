@@ -26,9 +26,10 @@ const campaignSchema = new mongoose.Schema({
   category: { type: String, required: true },
   brand_url: { type: String, required: true },
   link_text: { type: String, required: true },
+  tagline: { type: String, default: "" },
   tracking_code: { type: String, required: true, unique: true },
   active: { type: Number, default: 1 },
-  embedding: { type: [Number], required: false, select: false },
+  embedding: { type: [Number], required: false },
   description: { type: String, default: '' },
   keywords: { type: [String], default: [] },
   cpc_rate: { type: Number, default: 0 },
@@ -51,18 +52,35 @@ export const Campaign = mongoose.model('Campaign', campaignSchema);
 
 const eventSchema = new mongoose.Schema({
   campaign_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', index: true },
+  agent_id: { type: String, default: null, index: true },
   type: { type: String, enum: ['impression', 'click', 'conversion'], required: true },
-  session_id: { type: String, index: true },
-  intent_type: { type: String, enum: ['cold', 'warm', 'hot'], default: 'cold' },
+  user_prompt: { type: String, default: null },
   conversion_value: { type: Number, default: 0 },
   metadata: { type: mongoose.Schema.Types.Mixed },
   createdAt: { type: Date, default: Date.now, index: true },
 }, { timestamps: false });
 
 eventSchema.index({ campaign_id: 1, type: 1 });
-eventSchema.index({ intent_type: 1, createdAt: -1 });
+eventSchema.index({ agent_id: 1, type: 1 });
+eventSchema.index({ createdAt: -1 });
 
 export const Event = mongoose.model('Event', eventSchema);
+
+const agentSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  owner_email: { type: String, required: true },
+  api_key_hash: { type: String, required: true, unique: true },
+  active: { type: Boolean, default: true },
+  total_requests: { type: Number, default: 0 },
+  total_impressions: { type: Number, default: 0 },
+  total_clicks: { type: Number, default: 0 },
+  revenue_earned: { type: Number, default: 0 },
+  last_seen: { type: Date },
+}, { timestamps: true });
+
+agentSchema.index({ active: 1 });
+
+export const Agent = mongoose.model('Agent', agentSchema);
 
 const sessionSchema = new mongoose.Schema({
   session_id: { type: String, required: true, unique: true },
@@ -98,6 +116,7 @@ async function seedDatabase() {
         category: 'electronics',
         brand_url: 'https://uzum.market',
         link_text: 'Uzum Market',
+        tagline: "O'zbekistonning eng yirik marketplace — muddatli to'lov va bepul yetkazish bilan",
         tracking_code: 'uzum-electronics-001',
         embedding: embedTech,
         description: "O'zbekistonning eng yirik onlayn marketplace. Elektronika, kiyim, uy jihozlari va boshqa ko'plab mahsulotlar.",
@@ -116,6 +135,7 @@ async function seedDatabase() {
         category: 'electronics',
         brand_url: 'https://olcha.uz',
         link_text: 'Olcha Market',
+        tagline: "Texnika va elektronika do'koni — muddatli to'lov imkoniyati bilan",
         tracking_code: 'olcha-electronics-002',
         embedding: embedTech,
         description: "Texnika va elektronika do'koni. Muddatli to'lov imkoniyati bilan.",
@@ -134,6 +154,7 @@ async function seedDatabase() {
         category: 'coffee',
         brand_url: 'https://www.bluebottlecoffee.com',
         link_text: 'Blue Bottle',
+        tagline: "Premium coffee beans and brewing equipment delivered to your door",
         tracking_code: 'bb-coffee-123',
         embedding: embedCoffee,
         description: "Premium coffee beans and brewing equipment.",
@@ -152,6 +173,7 @@ async function seedDatabase() {
         category: 'coding',
         brand_url: 'https://www.digitalocean.com',
         link_text: 'DigitalOcean',
+        tagline: "Cloud hosting and developer infrastructure — start free today",
         tracking_code: 'do-cloud-456',
         embedding: embedTech,
         description: "Cloud hosting and developer infrastructure.",
@@ -170,6 +192,7 @@ async function seedDatabase() {
         category: 'travel',
         brand_url: 'https://www.airbnb.com',
         link_text: 'Airbnb',
+        tagline: "Worldwide vacation rentals — find your next adventure",
         tracking_code: 'ab-travel-789',
         embedding: embedTravel,
         description: "Worldwide vacation rentals and experiences.",
@@ -188,6 +211,7 @@ async function seedDatabase() {
         category: 'finance',
         brand_url: 'https://zoodmall.com',
         link_text: 'ZoodMall',
+        tagline: "0% ustama bilan 6-12 oyga bo'lib to'lash — hoziroq xarid qiling",
         tracking_code: 'zood-finance-003',
         embedding: embedFinance,
         description: "Muddatli to'lov bilan xarid qilish platformasi. 0% ustama bilan 6-12 oyga bo'lib to'lash.",
@@ -206,6 +230,7 @@ async function seedDatabase() {
         category: 'food',
         brand_url: 'https://eda.yandex.uz',
         link_text: 'Yandex Eats',
+        tagline: "Tezkor yetkazib berish — eng yaxshi restaurantlardan buyurtma qiling",
         tracking_code: 'yandex-food-004',
         embedding: embedFood,
         description: "Tezkor yetkazib berish xizmati. Restaurantlar va fast food.",
@@ -224,6 +249,7 @@ async function seedDatabase() {
         category: 'fashion',
         brand_url: 'https://moda.uz',
         link_text: 'Moda.uz',
+        tagline: "O'zbekistondagi eng katta moda do'koni — trend kiyimlar va oyoq kiyimlar",
         tracking_code: 'moda-fashion-005',
         embedding: embedFashion,
         description: "O'zbekistondagi eng katta moda va kiyim-kechak onlayn do'koni.",
@@ -239,5 +265,23 @@ async function seedDatabase() {
       },
     ]);
     console.log("Seed data with Uzbekistan market campaigns created.");
+  }
+
+  // Seed a demo agent if none exists
+  const agentCount = await Agent.countDocuments();
+  if (agentCount === 0) {
+    const { hashApiKey, generateApiKey } = await import('./agentAuth.js');
+    const apiKey = generateApiKey();
+    const keyHash = hashApiKey(apiKey);
+
+    await Agent.create({
+      username: 'demo-telegram-bot',
+      owner_email: 'demo@synaptic.uz',
+      api_key_hash: keyHash,
+      active: true,
+    });
+
+    console.log("Demo agent created. API Key:", apiKey);
+    console.log("Store this key — it won't be shown again.");
   }
 }

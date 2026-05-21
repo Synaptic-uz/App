@@ -5,8 +5,10 @@ let openaiClient = null;
 function getClient() {
   if (!openaiClient) {
     const token = process.env["GITHUB_TOKEN"];
+    if (!token) {
+      throw new Error("GITHUB_TOKEN environment variable is not set");
+    }
     const endpoint = "https://models.github.ai/inference";
-    const embeddingModelName = "text-embedding-3-small";
 
     openaiClient = new OpenAI({
       baseURL: endpoint,
@@ -46,16 +48,13 @@ export function cosineSimilarity(vecA, vecB) {
   if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
 
   const len = vecA.length;
-  const a = new Float32Array(vecA);
-  const b = new Float32Array(vecB);
-
   let dotProduct = 0;
   let normA = 0;
   let normB = 0;
 
   for (let i = 0; i < len; i++) {
-    const ai = a[i];
-    const bi = b[i];
+    const ai = vecA[i];
+    const bi = vecB[i];
     dotProduct += ai * bi;
     normA += ai * ai;
     normB += bi * bi;
