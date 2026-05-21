@@ -1,3 +1,6 @@
+import crypto from 'node:crypto';
+if (!globalThis.crypto) globalThis.crypto = crypto;
+
 import mongoose from 'mongoose';
 import { embedText } from './embeddings.js';
 
@@ -42,6 +45,7 @@ const campaignSchema = new mongoose.Schema({
   max_daily_impressions: { type: Number, default: 1000 },
   today_impressions: { type: Number, default: 0 },
   last_reset_date: { type: Date, default: Date.now },
+  owner_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
 }, { timestamps: true });
 
 campaignSchema.index({ active: 1 });
@@ -49,6 +53,14 @@ campaignSchema.index({ category: 1 });
 campaignSchema.index({ source: 1 });
 
 export const Campaign = mongoose.model('Campaign', campaignSchema);
+
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['business', 'agent'], required: true },
+}, { timestamps: true });
+
+export const User = mongoose.model('User', userSchema);
 
 const eventSchema = new mongoose.Schema({
   campaign_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', index: true },
@@ -68,6 +80,7 @@ export const Event = mongoose.model('Event', eventSchema);
 
 const agentSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
+  owner_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
   owner_email: { type: String, required: true },
   api_key_hash: { type: String, required: true, unique: true },
   active: { type: Boolean, default: true },
@@ -196,7 +209,7 @@ async function seedDatabase() {
         tracking_code: 'ab-travel-789',
         embedding: embedTravel,
         description: "Worldwide vacation rentals and experiences.",
-        keywords: ['travel', 'hotel', 'vacation', 'sayohat', 'mehmonxona'],
+        keywords: ['travel', 'hotel', 'vacation', 'sayohat', 'sayohatga', 'turizm', 'mehmonxona', 'chipta', 'ta\'til', 'parij', 'istanbul'],
         cpc_rate: 800,
         cpa_rate: 0,
         cpa_percentage: 4,
@@ -267,21 +280,35 @@ async function seedDatabase() {
     console.log("Seed data with Uzbekistan market campaigns created.");
   }
 
-  // Seed a demo agent if none exists
-  const agentCount = await Agent.countDocuments();
-  if (agentCount === 0) {
-    const { hashApiKey, generateApiKey } = await import('./agentAuth.js');
-    const apiKey = generateApiKey();
-    const keyHash = hashApiKey(apiKey);
+  // Keep travel campaign keywords up to date for better matching
+  await Campaign.updateOne(
+    { tracking_code: 'ab-travel-789' },
+    {
+      $set: {
+        keywords: ['travel', 'hotel', 'vacation', 'sayohat', 'sayohatga', 'turizm', 'mehmonxona', 'chipta', "ta'til", 'parij', 'istanbul'],
+      },
+    }
+  );
 
-    await Agent.create({
-      username: 'demo-telegram-bot',
-      owner_email: 'demo@synaptic.uz',
-      api_key_hash: keyHash,
-      active: true,
-    });
+  // Ensure all seed campaigns stay active
+  await Campaign.updateMany(
+    { source: { $in: ['partner', 'seed'] } },
+    { $set: { active: 1 } }
+  );
 
-    console.log("Demo agent created. API Key:", apiKey);
-    console.log("Store this key — it won't be shown again.");
-  }
+  // Always ensure demo API key exists (required for /authorized/send_result testing)
+  const { hashApiKey } = await import('./agentAuth.js');
+  const demoKey = 'sk-synaptic-demo';
+  await Agent.updateOne(
+    { username: 'demo-telegram-bot' },
+    {
+      $set: {
+        owner_email: 'demo@synaptic.uz',
+        api_key_hash: hashApiKey(demoKey),
+        active: true,
+      },
+    },
+    { upsert: true }
+  );
+  console.log('Demo agent ready. API Key:', demoKey);
 }

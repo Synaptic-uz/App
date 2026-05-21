@@ -1,12 +1,23 @@
 import 'dotenv/config';
+import crypto from 'node:crypto';
+if (!globalThis.crypto) globalThis.crypto = crypto;
+
 import express from 'express';
 import cors from 'cors';
-import { connectDB, Campaign, Event, Agent, Session } from './db.js';
+import { connectDB, Campaign, Event, Agent, Session, User } from './db.js';
 import { enrichResponse, loadCampaignCache } from './enrichment.js';
 import { nanoid } from 'nanoid';
-import { embedText, cosineSimilarity } from './embeddings.js';
+import { embedText } from './embeddings.js';
+import { findBestCampaign } from './campaignMatcher.js';
 import { agentAuth, hashApiKey, generateApiKey } from './agentAuth.js';
-import { buildSuggestion } from './suggestion.js';
+import {
+  buildSuggestion,
+  buildCtaLabel,
+  buildTrackingUrl,
+  buildDisplayPath,
+  formatSponsoredAppend,
+} from './suggestion.js';
+import { generateToken, authenticateToken, hashPassword, comparePassword } from './auth.js';
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
@@ -17,10 +28,48 @@ process.on('uncaughtException', (error) => {
 });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3006;
 
 app.use(cors());
 app.use(express.json());
+
+// --- Auth Endpoints ---
+
+app.post('/api/auth/register', async (req, res) => {
+  const { email, password, role } = req.body;
+  if (!email || !password || !role) return res.status(400).json({ error: 'Missing fields' });
+
+  try {
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ error: 'Email already registered' });
+
+    const hashedPassword = await hashPassword(password);
+    const user = await User.create({ email, password: hashedPassword, role });
+
+    const token = generateToken(user);
+    res.json({ token, user: { email: user.email, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const isMatch = await comparePassword(password, user.password);
+    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const token = generateToken(user);
+    res.json({ token, user: { email: user.email, role: user.role } });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
 
 // --- Analytics Cache ---
 let analyticsCache = { data: null, timestamp: 0 };
@@ -76,11 +125,11 @@ async function getCachedAnalytics() {
 // --- Core Endpoints ---
 
 app.post('/api/enrich', async (req, res) => {
-  const { prompt } = req.body;
+  const { prompt, answer_only } = req.body;
   if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
   try {
-    const result = await enrichResponse(prompt);
+    const result = await enrichResponse(prompt, null, { answerOnly: !!answer_only });
     res.json(result);
   } catch (error) {
     console.error('Enrich error:', error);
@@ -97,45 +146,23 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
   if (!prompt) return res.json({ match: false });
 
   try {
-    const promptLower = prompt.toLowerCase();
-    let bestCampaign = null;
-    let highestScore = -1;
-    const SIMILARITY_THRESHOLD = 0.25;
+    const activeCampaigns = await Campaign.find({
+      active: { $in: [1, true] },
+    }).select('+embedding').lean();
 
-    const activeCampaigns = await Campaign.find({ active: 1 }).select('+embedding').lean();
+    const matchResult = await findBestCampaign(prompt, activeCampaigns);
+    const { campaign: bestCampaign, score: highestScore, method: matchMethod } = matchResult;
 
-    let promptEmbedding = null;
-
-    for (const campaign of activeCampaigns) {
-      let score = 0;
-
-      if (campaign.keywords && campaign.keywords.length > 0) {
-        let keywordMatches = 0;
-        for (const kw of campaign.keywords) {
-          if (promptLower.includes(kw.toLowerCase())) keywordMatches++;
-        }
-        if (keywordMatches > 0) {
-          score = (keywordMatches / campaign.keywords.length) * 0.8;
-        }
-      }
-
-      if (campaign.embedding && campaign.embedding.length > 0) {
-        if (!promptEmbedding) {
-          promptEmbedding = await embedText(prompt);
-        }
-        const vectorScore = cosineSimilarity(promptEmbedding, campaign.embedding);
-        score = Math.max(score, vectorScore);
-      }
-
-      if (score > highestScore) {
-        highestScore = score;
-        bestCampaign = campaign;
-      }
+    if (!bestCampaign) {
+      console.log(
+        `[send_result] no match | method=${matchMethod} | campaigns=${activeCampaigns.length} | prompt="${prompt.substring(0, 80)}"`
+      );
     }
 
-    if (bestCampaign && highestScore > SIMILARITY_THRESHOLD) {
+    if (bestCampaign) {
       const suggestion = buildSuggestion(bestCampaign);
-      const tracking_url = `${req.protocol}://${req.get('host')}/t/${bestCampaign.tracking_code}?a=${agent.username}`;
+      const cta_label = buildCtaLabel(bestCampaign);
+      const tracking_url = buildTrackingUrl(req, bestCampaign.tracking_code, agent.username);
 
       Event.create({
         campaign_id: bestCampaign._id,
@@ -150,11 +177,19 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
         match: true,
         intent: bestCampaign.category,
         suggestion,
+        sponsored_line: formatSponsoredAppend(suggestion, cta_label),
+        cta_label,
         tracking_url,
-        campaign: { name: bestCampaign.name, category: bestCampaign.category }
+        display_path: buildDisplayPath(bestCampaign.tracking_code),
+        campaign: {
+          name: bestCampaign.name,
+          category: bestCampaign.category,
+          link_text: bestCampaign.link_text,
+        },
       });
     }
 
+    // No match: return only match:false so agents keep their own answer unchanged
     return res.json({ match: false });
 
   } catch (error) {
@@ -165,8 +200,12 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
 
 // --- Agent Registration ---
 
-app.post('/api/agents/register', async (req, res) => {
+app.post('/api/agents/register', authenticateToken, async (req, res) => {
   const { username, owner_email } = req.body;
+
+  if (req.user.role !== 'agent') {
+    return res.status(403).json({ error: 'Only agent accounts can register API keys' });
+  }
 
   if (!username || !owner_email) {
     return res.status(400).json({ error: 'Username and owner_email are required' });
@@ -179,7 +218,12 @@ app.post('/api/agents/register', async (req, res) => {
     const api_key = generateApiKey();
     const api_key_hash = hashApiKey(api_key);
 
-    await Agent.create({ username, owner_email, api_key_hash });
+    await Agent.create({ 
+      username, 
+      owner_email, 
+      api_key_hash,
+      owner_id: req.user.id 
+    });
 
     res.json({
       message: 'Agent registered. Store your API key — it will not be shown again.',
@@ -193,9 +237,10 @@ app.post('/api/agents/register', async (req, res) => {
 
 // --- Agent List & Stats ---
 
-app.get('/api/agents', async (req, res) => {
+app.get('/api/agents', authenticateToken, async (req, res) => {
   try {
-    const agents = await Agent.find().sort({ total_clicks: -1 }).lean();
+    const query = req.user.role === 'agent' ? { owner_id: req.user.id } : {};
+    const agents = await Agent.find(query).sort({ total_clicks: -1 }).lean();
     res.json(agents.map(a => ({
       ...a,
       api_key_hash: undefined,
@@ -205,11 +250,16 @@ app.get('/api/agents', async (req, res) => {
   }
 });
 
-app.get('/api/agents/:username/stats', async (req, res) => {
+app.get('/api/agents/:username/stats', authenticateToken, async (req, res) => {
   const { username } = req.params;
   try {
     const agent = await Agent.findOne({ username }).lean();
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
+
+    // Enforce ownership
+    if (agent.owner_id && agent.owner_id.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized access to this agent' });
+    }
 
     const [events, dailyStats] = await Promise.all([
       Event.aggregate([
@@ -334,11 +384,16 @@ app.get('/api/intent-stats', async (req, res) => {
 
 // --- B2B Campaign Dashboard ---
 
-app.get('/api/dashboard/:campaignId', async (req, res) => {
+app.get('/api/dashboard/:campaignId', authenticateToken, async (req, res) => {
   const { campaignId } = req.params;
   try {
     const campaign = await Campaign.findById(campaignId).lean();
     if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+    // Enforce ownership
+    if (campaign.owner_id && campaign.owner_id.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Unauthorized access to this campaign' });
+    }
 
     const [events, dailyStats] = await Promise.all([
       Event.aggregate([
@@ -387,41 +442,55 @@ app.get('/api/dashboard/:campaignId', async (req, res) => {
 
 // --- Campaign CRUD ---
 
-app.get('/api/campaigns', async (req, res) => {
+app.get('/api/campaigns', authenticateToken, async (req, res) => {
   try {
-    const campaigns = await Campaign.find().select('-embedding').sort({ createdAt: -1 }).lean();
+    const query = req.user.role === 'business' ? { owner_id: req.user.id } : {};
+    const campaigns = await Campaign.find(query).select('-embedding').sort({ createdAt: -1 }).lean();
     res.json(campaigns);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch campaigns' });
   }
 });
 
-app.post('/api/campaigns', async (req, res) => {
+app.post('/api/campaigns', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'business') {
+    return res.status(403).json({ error: 'Only business accounts can create campaigns' });
+  }
+
   const { name, category, brand_url, link_text, tagline, description, keywords, cpc_rate, cpa_percentage, tone, budget } = req.body;
   const tracking_code = nanoid(10);
+
+  if (!name || !category || !brand_url) {
+    return res.status(400).json({ error: 'Name, category, and brand URL are required' });
+  }
 
   try {
     const promptContext = `${name} ${category} ${description || ''} ${(keywords || []).join(' ')} ${brand_url}`;
     const embedding = await embedText(promptContext);
 
-    await Campaign.create({
-      name, category, brand_url, link_text, tagline: tagline || '', tracking_code, embedding,
+    const campaign = await Campaign.create({
+      name, category, brand_url, link_text: link_text || name, tagline: tagline || '', tracking_code, embedding,
       description: description || '', keywords: keywords || [],
       cpc_rate: cpc_rate || 0, cpa_percentage: cpa_percentage || 0,
       tone: tone || 'informative', budget: budget || 0, source: 'partner',
+      owner_id: req.user.id
     });
 
     loadCampaignCache();
-    res.json({ id: tracking_code });
+    res.json({ id: tracking_code, _id: campaign._id });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create campaign' });
   }
 });
 
-app.put('/api/campaigns/:id', async (req, res) => {
+app.put('/api/campaigns/:id', authenticateToken, async (req, res) => {
   try {
-    const campaign = await Campaign.findByIdAndUpdate(req.params.id, req.body, { new: true }).lean();
-    if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+    const campaign = await Campaign.findOne({ _id: req.params.id, owner_id: req.user.id });
+    if (!campaign) return res.status(404).json({ error: 'Campaign not found or unauthorized' });
+    
+    Object.assign(campaign, req.body);
+    await campaign.save();
+    
     loadCampaignCache();
     res.json(campaign);
   } catch (error) {
@@ -429,9 +498,11 @@ app.put('/api/campaigns/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/campaigns/:id', async (req, res) => {
+app.delete('/api/campaigns/:id', authenticateToken, async (req, res) => {
   try {
-    await Campaign.findByIdAndDelete(req.params.id);
+    const result = await Campaign.deleteOne({ _id: req.params.id, owner_id: req.user.id });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Campaign not found or unauthorized' });
+    
     loadCampaignCache();
     res.json({ success: true });
   } catch (error) {
@@ -458,8 +529,11 @@ app.post('/api/cache/clear', async (req, res) => {
   res.json({ success: true });
 });
 
-connectDB().then(() => {
+connectDB().then(async () => {
   loadCampaignCache();
+  const campaignCount = await Campaign.countDocuments({ active: { $in: [1, true] } });
+  const demoAgent = await Agent.findOne({ username: 'demo-telegram-bot' });
+  console.log(`Active campaigns: ${campaignCount} | Demo agent: ${demoAgent ? 'ok' : 'MISSING'}`);
   app.listen(PORT, () => {
     console.log(`Synaptic AI(SI) Backend running on http://localhost:${PORT}`);
   });
