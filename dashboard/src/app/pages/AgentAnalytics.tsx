@@ -3,14 +3,8 @@ import { useNavigate } from 'react-router';
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DollarSign, MousePointerClick, Users, ArrowUpRight } from 'lucide-react';
 import { api } from '../../lib/api';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
 import { Skeleton } from "../components/ui/skeleton";
+import { uz, dateLocale } from '../../lib/uz';
 
 export default function AgentAnalytics() {
   const navigate = useNavigate();
@@ -56,13 +50,13 @@ export default function AgentAnalytics() {
   if (!loading && !agents.length) {
     return (
       <div className="size-full bg-white flex flex-col items-center justify-center min-h-[500px]">
-        <h2 className="text-2xl font-bold text-black mb-2">No Agents Found</h2>
-        <p className="text-black/60 mb-6">Register your first AI agent to see analytics</p>
+        <h2 className="text-2xl font-bold text-black mb-2">{uz.agentAnalytics.noAgents}</h2>
+        <p className="text-black/60 mb-6">{uz.agentAnalytics.noAgentsSub}</p>
         <button 
           onClick={() => navigate('/agent/manage')}
           className="px-6 py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors"
         >
-          Register Agent
+          {uz.agentAnalytics.registerAgent}
         </button>
       </div>
     );
@@ -70,36 +64,35 @@ export default function AgentAnalytics() {
 
   const { totals, daily_stats = [], agent } = dashboard || { totals: { clicks: 0, impressions: 0, ctr: '0%' }, daily_stats: [], agent: {} };
 
-  // Calculate synthetic revenue for the agent based on clicks if backend doesn't populate `revenue_earned` yet
-  const simulatedRevenue = totals.clicks * 250; // 250 UZS per click assumption
+  const revenueEarned = totals.revenue_earned ?? 0;
+  const revenuePerClick = totals.clicks > 0 ? Math.round(revenueEarned / totals.clicks) : 0;
 
   const revenueData = daily_stats.map((d: any) => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
-    revenue: d.clicks * 250,
+    date: new Date(d.date).toLocaleDateString(dateLocale, { weekday: 'short' }),
+    revenue: d.clicks * revenuePerClick,
   }));
 
   const visitorsData = daily_stats.map((d: any) => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    date: new Date(d.date).toLocaleDateString(dateLocale, { weekday: 'short' }),
     visitors: d.impressions,
   }));
 
   return (
     <div className="size-full bg-white overflow-auto">
       <div className="max-w-7xl mx-auto p-8">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-black mb-2">
-              {agent.username ? `${agent.username} Analytics` : 'Agent Analytics'}
+              {agent.username ? uz.agentAnalytics.agentTitle(agent.username) : uz.agentAnalytics.title}
             </h1>
-            <p className="text-black/60">Monitor your AI agent's monetization and traffic</p>
+            <p className="text-black/60">{uz.agentAnalytics.subtitle}</p>
           </div>
           <div className="flex gap-3 items-center">
             {agents.length > 1 && (
-              <span className="text-sm text-black/40 font-medium">Showing {agent.username}</span>
+              <span className="text-sm text-black/40 font-medium">{uz.agentAnalytics.showing(agent.username)}</span>
             )}
             <button className="px-6 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors">
-              Download Data
+              {uz.agentAnalytics.download}
             </button>
           </div>
         </div>
@@ -113,7 +106,6 @@ export default function AgentAnalytics() {
           </div>
         ) : (
           <>
-            {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -124,8 +116,8 @@ export default function AgentAnalytics() {
                     +14.5% <ArrowUpRight className="w-4 h-4 ml-1" />
                   </span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Revenue Earned</p>
-                <p className="text-3xl font-bold text-black">{simulatedRevenue.toLocaleString()} UZS</p>
+                <p className="text-black/60 text-sm mb-1">{uz.agentAnalytics.revenue}</p>
+                <p className="text-3xl font-bold text-black">{revenueEarned.toLocaleString()} {uz.common.uzs}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -134,7 +126,7 @@ export default function AgentAnalytics() {
                     <Users className="w-6 h-6 text-[#0000FF]" />
                   </div>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Impressions</p>
+                <p className="text-black/60 text-sm mb-1">{uz.agentAnalytics.impressions}</p>
                 <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString()}</p>
               </div>
 
@@ -144,7 +136,7 @@ export default function AgentAnalytics() {
                     <MousePointerClick className="w-6 h-6 text-[#0000FF]" />
                   </div>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Clicks</p>
+                <p className="text-black/60 text-sm mb-1">{uz.agentAnalytics.clicks}</p>
                 <p className="text-3xl font-bold text-black">{totals.clicks.toLocaleString()}</p>
               </div>
 
@@ -154,18 +146,16 @@ export default function AgentAnalytics() {
                     <ArrowUpRight className="w-6 h-6 text-[#0000FF]" />
                   </div>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Click Through Rate</p>
+                <p className="text-black/60 text-sm mb-1">{uz.agentAnalytics.ctr}</p>
                 <p className="text-3xl font-bold text-black">{totals.ctr}</p>
               </div>
             </div>
 
-            {/* Charts Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Revenue Area Chart */}
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-black mb-1">Revenue Overview</h2>
-                  <p className="text-black/60">Estimated revenue based on clicks</p>
+                  <h2 className="text-2xl font-bold text-black mb-1">{uz.agentAnalytics.revenueChart}</h2>
+                  <p className="text-black/60">{uz.agentAnalytics.revenueChartSub}</p>
                 </div>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
@@ -213,11 +203,10 @@ export default function AgentAnalytics() {
                 </div>
               </div>
 
-              {/* Visitors Line Chart */}
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-black mb-1">Total Impressions</h2>
-                  <p className="text-black/60">Number of users who saw the ads</p>
+                  <h2 className="text-2xl font-bold text-black mb-1">{uz.agentAnalytics.impressionsChart}</h2>
+                  <p className="text-black/60">{uz.agentAnalytics.impressionsChartSub}</p>
                 </div>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">

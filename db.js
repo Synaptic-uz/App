@@ -71,6 +71,8 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['business', 'agent'], required: true },
+  /** Business account balance (UZS) — deducted when campaign budget is allocated */
+  balance: { type: Number, default: 0 },
 }, { timestamps: true });
 
 export const User = mongoose.model('User', userSchema);
@@ -140,7 +142,33 @@ export async function bootstrapRankingStats(bulkLoadCtr) {
   );
 }
 
-export async function incrementCampaignImpression(campaignId, cpcRate = 0) {
+/** Sum of remaining budgets across a business owner's campaigns. */
+export function sumCampaignBudgets(campaigns) {
+  return (campaigns || []).reduce((sum, c) => sum + Math.max(0, Number(c.budget) || 0), 0);
+}
+
+/** True when campaign can still afford at least one click (budget 0 = unlimited). */
+export function campaignHasBudgetRemaining(campaign) {
+  const budget = Number(campaign?.budget) || 0;
+  if (budget <= 0) return true;
+  const cpc = Number(campaign?.cpc_rate) || 0;
+  if (cpc > 0) return budget >= cpc;
+  return budget > 0;
+}
+
+/** One-time: budget field becomes remaining funds (was cap minus spent). */
+export async function migrateBudgetToRemaining() {
+  const campaigns = await Campaign.find({ budget: { $gt: 0 }, spent: { $gt: 0 } }).lean();
+  for (const c of campaigns) {
+    const remaining = Math.max(0, c.budget - c.spent);
+    if (remaining !== c.budget) {
+      await Campaign.updateOne({ _id: c._id }, { $set: { budget: remaining } });
+    }
+  }
+}
+
+/** Record impression counts only — CPC is charged on click, not impression. */
+export async function incrementCampaignImpression(campaignId) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const campaign = await Campaign.findById(campaignId).select('last_reset_date today_impressions').lean();
@@ -152,17 +180,67 @@ export async function incrementCampaignImpression(campaignId, cpcRate = 0) {
   if (sameDay) {
     await Campaign.updateOne(
       { _id: campaignId },
-      { $inc: { today_impressions: 1, stats_impressions: 1, spent: cpcRate } }
+      { $inc: { today_impressions: 1, stats_impressions: 1 } }
     );
   } else {
     await Campaign.updateOne(
       { _id: campaignId },
       {
         $set: { today_impressions: 1, last_reset_date: today },
-        $inc: { stats_impressions: 1, spent: cpcRate },
+        $inc: { stats_impressions: 1 },
       }
     );
   }
+}
+
+/**
+ * CPC on click: subtract from campaign.budget (remaining balance) and track lifetime spent.
+ */
+export async function chargeCampaignClick(campaignId, cpcRate = 0, agentUsername = null) {
+  const rate = Number(cpcRate) || 0;
+
+  if (rate <= 0) {
+    await Campaign.updateOne({ _id: campaignId }, { $inc: { stats_clicks: 1 } });
+    if (agentUsername) {
+      await Agent.updateOne({ username: agentUsername }, { $inc: { total_clicks: 1 } });
+    }
+    return { charged: 0 };
+  }
+
+  const camp = await Campaign.findById(campaignId).select('budget').lean();
+  const unlimited = !camp || Number(camp.budget) <= 0;
+
+  let updated;
+  if (unlimited) {
+    updated = await Campaign.findOneAndUpdate(
+      { _id: campaignId },
+      { $inc: { stats_clicks: 1, spent: rate } },
+      { new: true }
+    ).lean();
+  } else {
+    updated = await Campaign.findOneAndUpdate(
+      { _id: campaignId, budget: { $gte: rate } },
+      { $inc: { budget: -rate, spent: rate, stats_clicks: 1 } },
+      { new: true }
+    ).lean();
+  }
+
+  if (!updated) {
+    await Campaign.updateOne({ _id: campaignId }, { $inc: { stats_clicks: 1 } });
+    if (agentUsername) {
+      await Agent.updateOne({ username: agentUsername }, { $inc: { total_clicks: 1 } });
+    }
+    return { charged: 0, reason: 'budget_exhausted' };
+  }
+
+  if (agentUsername) {
+    await Agent.updateOne(
+      { username: agentUsername },
+      { $inc: { total_clicks: 1, revenue_earned: rate } }
+    );
+  }
+
+  return { charged: rate, spent: updated.spent, budget: updated.budget };
 }
 
 async function embedForCampaign(doc) {
@@ -229,6 +307,7 @@ async function migrateCampaignCatalog() {
 
 async function seedDatabase() {
   await migrateCampaignCatalog();
+  await migrateBudgetToRemaining();
 
   const count = await Campaign.countDocuments({ active: { $in: [1, true] } });
 
@@ -416,4 +495,5 @@ async function seedDatabase() {
     { upsert: true }
   );
   console.log('Demo agent ready. API Key:', demoKey);
+
 }

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { MousePointerClick, Eye, Wallet, Zap } from 'lucide-react';
+import { MousePointerClick, DollarSign, Wallet, Zap } from 'lucide-react';
 import { api } from '../../lib/api';
+import MainBalanceBanner from '../components/MainBalanceBanner';
+import { uz, dateLocale } from '../../lib/uz';
 import {
   Select,
   SelectContent,
@@ -18,14 +20,20 @@ export default function BusinessAnalytics() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
   const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [mainBalance, setMainBalance] = useState(0);
 
   useEffect(() => {
     async function loadCampaigns() {
       try {
-        const camps = await api.getCampaigns();
+        const data = await api.getCampaigns();
+        const camps = Array.isArray(data) ? data : data.campaigns || [];
         setCampaigns(camps);
+        setMainBalance(
+          typeof data?.main_balance === 'number'
+            ? data.main_balance
+            : camps.reduce((s: number, c: { budget?: number }) => s + (c.budget || 0), 0)
+        );
         if (camps.length > 0) {
-          // You could also check for a query param here if you want to link from Campaigns page
           setSelectedCampaignId(camps[0].id || camps[0]._id);
         } else {
           setLoading(false);
@@ -45,6 +53,15 @@ export default function BusinessAnalytics() {
       try {
         const data = await api.getCampaignDashboard(selectedCampaignId);
         setDashboard(data);
+        if (data?.campaign?.budget !== undefined) {
+          const dataCamps = await api.getCampaigns();
+          const list = Array.isArray(dataCamps) ? dataCamps : dataCamps.campaigns || [];
+          setMainBalance(
+            typeof dataCamps?.main_balance === 'number'
+              ? dataCamps.main_balance
+              : list.reduce((s: number, c: { budget?: number }) => s + (c.budget || 0), 0)
+          );
+        }
       } catch (err) {
         console.error("Failed to load dashboard", err);
       } finally {
@@ -57,13 +74,13 @@ export default function BusinessAnalytics() {
   if (!loading && !campaigns.length) {
     return (
       <div className="size-full bg-white flex flex-col items-center justify-center min-h-[500px]">
-        <h2 className="text-2xl font-bold text-black mb-2">No Campaigns Found</h2>
-        <p className="text-black/60 mb-6">Create your first campaign to see analytics</p>
+        <h2 className="text-2xl font-bold text-black mb-2">{uz.businessAnalytics.noCampaigns}</h2>
+        <p className="text-black/60 mb-6">{uz.businessAnalytics.noCampaignsSub}</p>
         <button 
           onClick={() => navigate('/business/campaigns')}
           className="px-6 py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors"
         >
-          Create Campaign
+          {uz.businessAnalytics.createCampaign}
         </button>
       </div>
     );
@@ -71,19 +88,20 @@ export default function BusinessAnalytics() {
 
   const { totals, daily_stats = [], campaign } = dashboard || { totals: { clicks: 0, impressions: 0, ctr: '0%' }, daily_stats: [], campaign: {} };
 
-  // Format daily stats for charts
+  // Calculate CPC trend and format for charts
+  const avgCostPerClick = campaign.cpc_rate ? (campaign.cpc_rate / 1000).toFixed(2) : "0.00"; // Assuming cpc_rate is in UZS, convert to a display friendly number for demo or leave it
   
   const dailyClicksData = daily_stats.map((d: any) => ({
-    day: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    day: new Date(d.date).toLocaleDateString(dateLocale, { weekday: 'short' }),
     clicks: d.clicks,
     impressions: d.impressions,
   }));
 
   // Simulate some conversion data based on real clicks if actual conversion stats aren't heavily populated by backend /dashboard/:id yet
   const clicksPerActionData = [
-    { action: 'Product View', clicks: totals.clicks, conversions: Math.floor(totals.clicks * 0.4) },
-    { action: 'Add to Cart', clicks: Math.floor(totals.clicks * 0.4), conversions: Math.floor(totals.clicks * 0.15) },
-    { action: 'Purchase', clicks: Math.floor(totals.clicks * 0.15), conversions: Math.floor(totals.clicks * 0.05) },
+    { action: uz.businessAnalytics.productView, clicks: totals.clicks, conversions: Math.floor(totals.clicks * 0.4) },
+    { action: uz.businessAnalytics.addToCart, clicks: Math.floor(totals.clicks * 0.4), conversions: Math.floor(totals.clicks * 0.15) },
+    { action: uz.businessAnalytics.purchase, clicks: Math.floor(totals.clicks * 0.15), conversions: Math.floor(totals.clicks * 0.05) },
   ];
 
   return (
@@ -93,19 +111,27 @@ export default function BusinessAnalytics() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-black mb-2">
-              {campaign.name ? `${campaign.name} Analytics` : 'Business Analytics'}
+              {campaign.name ? uz.businessAnalytics.campaignTitle(campaign.name) : uz.businessAnalytics.title}
             </h1>
-            <p className="text-black/60">Track click performance and advertising costs</p>
+            <p className="text-black/60">{uz.businessAnalytics.subtitle}</p>
           </div>
           <div className="flex gap-3 items-center">
             {campaigns.length > 1 && (
-              <span className="text-sm text-black/40 font-medium">Showing {campaign.name}</span>
+              <span className="text-sm text-black/40 font-medium">{uz.businessAnalytics.showing(campaign.name)}</span>
             )}
             <button className="px-6 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors">
-              Export
+              {uz.common.export}
             </button>
           </div>
         </div>
+
+        {!loading && campaigns.length > 0 && (
+          <MainBalanceBanner
+            mainBalance={mainBalance}
+            campaignCount={campaigns.length}
+            className="mb-8"
+          />
+        )}
 
         {loading ? (
           <div className="space-y-8">
@@ -123,21 +149,21 @@ export default function BusinessAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <MousePointerClick className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">7 Days</span>
+                  <span className="text-sm text-black/60">{uz.common.days7}</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Clicks</p>
+                <p className="text-black/60 text-sm mb-1">{uz.businessAnalytics.totalClicks}</p>
                 <p className="text-3xl font-bold text-black">{totals.clicks.toLocaleString()}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
-                    <Eye className="w-6 h-6 text-[#0000FF]" />
+                    <DollarSign className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">7 Days</span>
+                  <span className="text-sm text-black/60">{uz.common.average}</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Impressions</p>
-                <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString()}</p>
+                <p className="text-black/60 text-sm mb-1">{uz.businessAnalytics.costPerClick}</p>
+                <p className="text-3xl font-bold text-black">{campaign.cpc_rate || 0}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -145,10 +171,15 @@ export default function BusinessAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <Wallet className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">Lifetime</span>
+                  <span className="text-sm text-black/60">This campaign</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Campaign Budget</p>
-                <p className="text-3xl font-bold text-black">{(campaign.budget || 0).toLocaleString()} UZS</p>
+                <p className="text-black/60 text-sm mb-1">{uz.businessAnalytics.balanceLeft}</p>
+                <p className="text-3xl font-bold text-black">
+                  {campaign.budget > 0 ? `${(campaign.budget || 0).toLocaleString()} ${uz.common.uzs}` : uz.common.unlimited}
+                </p>
+                <p className="text-xs text-black/50 mt-1">
+                  {uz.businessAnalytics.usedSoFar((campaign.spent || 0).toLocaleString())}
+                </p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -158,7 +189,7 @@ export default function BusinessAnalytics() {
                   </div>
                   <span className="text-sm text-black/60">Average</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Click Through Rate</p>
+                <p className="text-black/60 text-sm mb-1">{uz.businessAnalytics.ctr}</p>
                 <p className="text-3xl font-bold text-black">{totals.ctr}</p>
               </div>
             </div>
@@ -169,8 +200,8 @@ export default function BusinessAnalytics() {
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-black mb-1">Daily Click Performance</h2>
-                    <p className="text-black/60">Number of users who clicked your links each day</p>
+                    <h2 className="text-2xl font-bold text-black mb-1">{uz.businessAnalytics.dailyClicks}</h2>
+                    <p className="text-black/60">{uz.businessAnalytics.dailyClicksSub}</p>
                   </div>
                 </div>
                 <div className="h-96">
@@ -193,12 +224,12 @@ export default function BusinessAnalytics() {
                           borderRadius: '8px',
                           color: '#000000'
                         }}
-                        formatter={(value) => [`${value}`, 'Count']}
+                        formatter={(value) => [`${value}`, uz.common.count]}
                       />
                       <Bar
                         dataKey="clicks"
                         fill="#0000FF"
-                        name="Clicks"
+                        name={uz.agentAnalytics.clicks}
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -210,18 +241,18 @@ export default function BusinessAnalytics() {
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-black mb-1">Funnel Conversions</h2>
-                    <p className="text-black/60">Performance breakdown by action type</p>
+                    <h2 className="text-2xl font-bold text-black mb-1">{uz.businessAnalytics.funnel}</h2>
+                    <p className="text-black/60">{uz.businessAnalytics.funnelSub}</p>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-black/10">
-                        <th className="text-left py-4 px-4 text-black font-semibold">Action Type</th>
-                        <th className="text-right py-4 px-4 text-black font-semibold">Total Events</th>
-                        <th className="text-right py-4 px-4 text-black font-semibold">Conversions</th>
-                        <th className="text-right py-4 px-4 text-black font-semibold">Conversion Rate</th>
+                        <th className="text-left py-4 px-4 text-black font-semibold">{uz.businessAnalytics.actionType}</th>
+                        <th className="text-right py-4 px-4 text-black font-semibold">{uz.businessAnalytics.totalEvents}</th>
+                        <th className="text-right py-4 px-4 text-black font-semibold">{uz.businessAnalytics.conversions}</th>
+                        <th className="text-right py-4 px-4 text-black font-semibold">{uz.businessAnalytics.conversionRate}</th>
                       </tr>
                     </thead>
                     <tbody>

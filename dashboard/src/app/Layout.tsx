@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { Target, Users, LayoutDashboard, Plus, Briefcase, Bot, LogOut, LogIn } from 'lucide-react';
 import { useAuth } from './context/AuthContext';
+import { uz } from '../lib/uz';
 
 export default function Layout() {
   const location = useLocation();
@@ -8,12 +9,12 @@ export default function Layout() {
   const { user, logout, isAuthenticated } = useAuth();
 
   const allNavItems = [
-    { name: 'Home', path: '/', icon: LayoutDashboard, roles: ['any'] },
-    { name: 'Campaigns', path: '/business/campaigns', icon: Briefcase, roles: ['business'] },
-    { name: 'Business Analytics', path: '/business/analytics', icon: Target, roles: ['business'] },
-    { name: 'Agents', path: '/agent/manage', icon: Bot, roles: ['agent'] },
-    { name: 'Agent Analytics', path: '/agent/analytics', icon: Users, roles: ['agent'] },
-    { name: 'Chat Demo', path: '/demo', icon: Bot, roles: ['any'] },
+    { name: uz.nav.home, path: '/', icon: LayoutDashboard, roles: ['any'] },
+    { name: uz.nav.campaigns, path: '/business/campaigns', icon: Briefcase, roles: ['business'] },
+    { name: uz.nav.businessAnalytics, path: '/business/analytics', icon: Target, roles: ['business'] },
+    { name: uz.nav.agents, path: '/agent/manage', icon: Bot, roles: ['agent'] },
+    { name: uz.nav.agentAnalytics, path: '/agent/analytics', icon: Users, roles: ['agent'] },
+    { name: uz.nav.chatDemo, path: '/demo', icon: Bot, roles: ['any'] },
   ];
 
   const navItems = allNavItems.filter(item => 
@@ -27,12 +28,11 @@ export default function Layout() {
 
   return (
     <div className="h-screen bg-white flex flex-col font-sans overflow-hidden">
-      {/* Header */}
       <header className="border-b-2 border-black/10 bg-white">
         <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link to="/" className="text-2xl font-bold text-black hover:opacity-80">
-              Synaptic AI
+              {uz.layout.brand}
             </Link>
             
             <nav className="flex items-center gap-2">
@@ -59,7 +59,7 @@ export default function Layout() {
                 {user?.role === 'agent' && (
                   <Link to="/agent/manage">
                     <button className="px-4 py-2 bg-black/5 text-black hover:bg-black/10 transition-colors rounded-lg text-sm font-medium">
-                      Register Agent
+                      {uz.nav.registerAgent}
                     </button>
                   </Link>
                 )}
@@ -67,7 +67,7 @@ export default function Layout() {
                   <Link to="/business/campaigns">
                     <button className="px-4 py-2 bg-[#0000FF] text-white hover:bg-[#0000CC] transition-colors rounded-lg text-sm font-medium flex items-center gap-2">
                       <Plus className="w-4 h-4" />
-                      New Campaign
+                      {uz.nav.newCampaign}
                     </button>
                   </Link>
                 )}
@@ -77,6 +77,7 @@ export default function Layout() {
                   <button 
                     onClick={handleLogout}
                     className="p-2 text-black/40 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                    aria-label={uz.common.signOut}
                   >
                     <LogOut className="w-5 h-5" />
                   </button>
@@ -86,7 +87,7 @@ export default function Layout() {
               <Link to="/login">
                 <button className="px-6 py-2 bg-[#0000FF] text-white hover:bg-[#0000CC] transition-colors rounded-lg text-sm font-medium flex items-center gap-2">
                   <LogIn className="w-4 h-4" />
-                  Sign In
+                  {uz.common.signIn}
                 </button>
               </Link>
             )}
@@ -94,7 +95,6 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
         <Outlet />
       </main>

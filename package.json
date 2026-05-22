@@ -8,7 +8,8 @@
 		"test": "node scripts/test-ad-ranking.js",
 		"test:ranking": "node scripts/test-ad-ranking.js",
 		"test:matching": "node scripts/test-matching.js",
-		"test:match": "node scripts/diagnose-match.js"
+		"test:match": "node scripts/diagnose-match.js",
+		"audit:match": "node scripts/audit-match-setup.mjs"
 	},
 	"keywords": [],
 	"author": "",

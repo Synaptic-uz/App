@@ -11,7 +11,7 @@ const getHeaders = () => {
 async function parseJsonResponse(res: Response) {
   const result = await res.json();
   if (!res.ok) {
-    throw new Error(result.error || 'Request failed');
+    throw new Error(result.error || 'So\'rov bajarilmadi');
   }
   return result;
 }
@@ -81,6 +81,10 @@ export const api = {
   },
   getCampaignDashboard: async (id: string) => {
     const res = await fetch(`${API_BASE}/dashboard/${id}`, { headers: getHeaders() });
+    return parseJsonResponse(res);
+  },
+  getAccount: async () => {
+    const res = await fetch(`${API_BASE}/account`, { headers: getHeaders() });
     return parseJsonResponse(res);
   },
 

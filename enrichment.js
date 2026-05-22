@@ -1,6 +1,6 @@
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
-import { Campaign, Event, Session, incrementCampaignImpression } from './db.js';
+import { Campaign, Event, Session, incrementCampaignImpression, campaignHasBudgetRemaining } from './db.js';
 import { findBestCampaign } from './campaignMatcher.js';
 import { syncCampaignStats } from './adRanking.js';
 import { nanoid } from 'nanoid';
@@ -24,13 +24,19 @@ let campaignCacheLoaded = false;
 let campaignCacheTimestamp = 0;
 const CACHE_TTL = 60000;
 
+/** Force next loadCampaignCache() to reload from MongoDB (e.g. after create/update). */
+export function invalidateCampaignCache() {
+  campaignCacheLoaded = false;
+  campaignCacheTimestamp = 0;
+}
+
 export async function loadCampaignCache() {
   if (campaignCacheLoaded && Date.now() - campaignCacheTimestamp < CACHE_TTL) {
     return campaignCache;
   }
 
   const campaigns = await Campaign.find({ active: { $in: [1, true] } }).select('+embedding').lean();
-  campaignCache = campaigns.map(c => ({
+  campaignCache = campaigns.filter(campaignHasBudgetRemaining).map(c => ({
     _id: c._id,
     name: c.name,
     category: c.category,
@@ -40,6 +46,9 @@ export async function loadCampaignCache() {
     description: c.description,
     keywords: c.keywords || [],
     cpc_rate: c.cpc_rate || 0,
+    budget: c.budget || 0,
+    spent: c.spent || 0,
+    active: c.active,
     cpa_percentage: c.cpa_percentage || 0,
     tone: c.tone || 'informative',
     subcategory: c.subcategory || 'general',
@@ -272,7 +281,7 @@ async function logAnalytics(sessionId, campaign, intent, score) {
   if (campaign) {
     ops.push(
       Event.create({ campaign_id: campaign._id, type: 'impression', session_id: sessionId, intent_type: intent.intent }),
-      incrementCampaignImpression(campaign._id, campaign.cpc_rate || 0)
+      incrementCampaignImpression(campaign._id)
     );
   }
 

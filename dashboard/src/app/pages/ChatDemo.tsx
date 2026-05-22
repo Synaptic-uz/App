@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, Bot } from 'lucide-react';
 import { api } from '../../lib/api';
+import { uz } from '../../lib/uz';
 
 type Message = {
   id: string;
@@ -26,8 +27,7 @@ function maskVisibleUrls(text: string) {
     .trim();
 }
 
-const FALLBACK_ANSWER =
-  "Savolingiz bo'yicha yordam bera olaman. Biroz batafsil yozsangiz, aniqroq javob beraman.";
+const FALLBACK_ANSWER = uz.chat.fallback;
 
 function buildBotMessage(
   answer: string,
@@ -37,9 +37,9 @@ function buildBotMessage(
   if (!sponsored?.suggestion) {
     return { text: cleanAnswer };
   }
-  const label = sponsored.cta_label || 'Batafsil';
+  const label = sponsored.cta_label || uz.chat.details;
   return {
-    text: `${cleanAnswer}\n\n\n[SPONSORED]: ${sponsored.suggestion}`,
+    text: `${cleanAnswer}\n\n\n${uz.chat.sponsored}: ${sponsored.suggestion}`,
     ad: {
       match: true,
       suggestion: sponsored.suggestion,
@@ -54,7 +54,7 @@ export default function ChatDemo() {
     {
       id: '1',
       sender: 'bot',
-      text: 'Assalomu alaykum! Sizga qanday yordam bera olaman?',
+      text: uz.chat.greeting,
     },
   ]);
   const [input, setInput] = useState('');
@@ -171,8 +171,8 @@ export default function ChatDemo() {
           <Bot className="w-5 h-5 text-white" />
         </div>
         <div className="min-w-0">
-          <h2 className="font-semibold text-base text-black leading-tight">Synaptic Demo Bot</h2>
-          <p className="text-black/45 text-sm">{isTyping ? 'typing…' : 'online'}</p>
+          <h2 className="font-semibold text-base text-black leading-tight">{uz.chat.botName}</h2>
+          <p className="text-black/45 text-sm">{isTyping ? uz.chat.typing : uz.chat.online}</p>
         </div>
       </div>
 
@@ -209,7 +209,7 @@ export default function ChatDemo() {
                     rel="noopener noreferrer"
                     className="block text-center w-full bg-[#3390ec] hover:bg-[#2b7fd4] transition-colors rounded-lg py-2.5 text-sm font-medium text-white"
                   >
-                    {msg.ad.cta_label || "Batafsil ma'lumot"}
+                    {msg.ad.cta_label || uz.chat.details}
                   </a>
                 </div>
               )}
@@ -244,7 +244,7 @@ export default function ChatDemo() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message"
+              placeholder={uz.chat.placeholder}
               rows={1}
               className="flex-1 bg-transparent text-black outline-none resize-none overflow-y-auto text-[15px] leading-[22px] py-2 placeholder:text-black/40 max-h-[120px]"
               style={{ minHeight: '22px' }}
@@ -254,7 +254,7 @@ export default function ChatDemo() {
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
               className="shrink-0 p-2 text-[#3390ec] hover:bg-black/5 rounded-full transition-colors disabled:opacity-40 mb-0.5"
-              aria-label="Send"
+              aria-label={uz.chat.send}
             >
               <Send className="w-5 h-5" />
             </button>
