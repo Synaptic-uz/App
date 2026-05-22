@@ -29,6 +29,7 @@ export async function agentAuth(req, res, next) {
     const apiKey = req.body?.api_key || req.headers['x-synaptic-key'];
 
     if (!apiKey) {
+      console.warn('[agentAuth] missing api_key');
       return res.json({ match: false });
     }
 
@@ -36,6 +37,7 @@ export async function agentAuth(req, res, next) {
     const agent = await Agent.findOne({ api_key_hash: keyHash, active: true });
 
     if (!agent) {
+      console.warn('[agentAuth] invalid or inactive api_key');
       return res.json({ match: false });
     }
 

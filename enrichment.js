@@ -1,7 +1,8 @@
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
-import { Campaign, Event, Session } from './db.js';
-import { embedText, cosineSimilarity } from './embeddings.js';
+import { Campaign, Event, Session, incrementCampaignImpression } from './db.js';
+import { findBestCampaign } from './campaignMatcher.js';
+import { syncCampaignStats } from './adRanking.js';
 import { nanoid } from 'nanoid';
 import crypto from 'crypto';
 
@@ -17,8 +18,6 @@ function getClient() {
   return client;
 }
 
-const SIMILARITY_THRESHOLD = 0.25;
-
 // --- Performance Layer 1: In-Memory Campaign Cache ---
 let campaignCache = [];
 let campaignCacheLoaded = false;
@@ -30,7 +29,7 @@ export async function loadCampaignCache() {
     return campaignCache;
   }
 
-  const campaigns = await Campaign.find({ active: 1 }).select('+embedding').lean();
+  const campaigns = await Campaign.find({ active: { $in: [1, true] } }).select('+embedding').lean();
   campaignCache = campaigns.map(c => ({
     _id: c._id,
     name: c.name,
@@ -43,9 +42,19 @@ export async function loadCampaignCache() {
     cpc_rate: c.cpc_rate || 0,
     cpa_percentage: c.cpa_percentage || 0,
     tone: c.tone || 'informative',
+    subcategory: c.subcategory || 'general',
+    custom_category: c.custom_category || '',
+    niche_keywords: c.niche_keywords || [],
+    owner_id: c.owner_id,
+    max_daily_impressions: c.max_daily_impressions,
+    today_impressions: c.today_impressions,
+    last_reset_date: c.last_reset_date,
+    stats_impressions: c.stats_impressions,
+    stats_clicks: c.stats_clicks,
     embedding: c.embedding,
     keywordSet: new Set((c.keywords || []).map(k => k.toLowerCase())),
   }));
+  syncCampaignStats(campaignCache);
   campaignCacheLoaded = true;
   campaignCacheTimestamp = Date.now();
   console.log(`Campaign cache loaded: ${campaignCache.length} campaigns`);
@@ -57,12 +66,13 @@ const responseCache = new Map();
 const RESPONSE_CACHE_TTL = 300000;
 const MAX_CACHE_SIZE = 500;
 
-function getCacheKey(prompt) {
-  return crypto.createHash('md5').update(prompt.toLowerCase().trim()).digest('hex');
+function getCacheKey(prompt, answerOnly = false) {
+  const prefix = answerOnly ? 'answer-only-v5:' : 'matcher-v5:';
+  return crypto.createHash('md5').update(prefix + prompt.toLowerCase().trim()).digest('hex');
 }
 
-function getCachedResponse(prompt) {
-  const key = getCacheKey(prompt);
+function getCachedResponse(prompt, answerOnly = false) {
+  const key = getCacheKey(prompt, answerOnly);
   const cached = responseCache.get(key);
   if (cached && Date.now() - cached.timestamp < RESPONSE_CACHE_TTL) {
     return cached.data;
@@ -71,12 +81,12 @@ function getCachedResponse(prompt) {
   return null;
 }
 
-function setCachedResponse(prompt, data) {
+function setCachedResponse(prompt, data, answerOnly = false) {
   if (responseCache.size >= MAX_CACHE_SIZE) {
     const oldestKey = responseCache.keys().next().value;
     responseCache.delete(oldestKey);
   }
-  responseCache.set(getCacheKey(prompt), { data, timestamp: Date.now() });
+  responseCache.set(getCacheKey(prompt, answerOnly), { data, timestamp: Date.now() });
 }
 
 // --- Performance Layer 3: Rule-Based Intent Pre-Classification ---
@@ -114,29 +124,14 @@ function ruleBasedIntent(prompt) {
   return null;
 }
 
-// --- Performance Layer 4: Fast Keyword-First Matching ---
-function keywordMatchFirst(prompt, campaigns) {
-  const lower = prompt.toLowerCase();
-
-  const scored = campaigns.map(c => {
-    let matchCount = 0;
-    for (const kw of c.keywordSet) {
-      if (lower.includes(kw)) matchCount++;
-    }
-    return { campaign: c, keywordScore: matchCount / Math.max(c.keywordSet.size, 1) };
-  });
-
-  scored.sort((a, b) => b.keywordScore - a.keywordScore);
-  return scored[0]?.keywordScore > 0.3 ? scored[0] : null;
-}
-
 // --- Main Enrichment Flow ---
-export async function enrichResponse(prompt, sessionId = null) {
+export async function enrichResponse(prompt, sessionId = null, options = {}) {
+  const { answerOnly = false } = options;
   const startTime = Date.now();
   const session = sessionId || nanoid(16);
 
   // Check response cache first
-  const cached = getCachedResponse(prompt);
+  const cached = getCachedResponse(prompt, answerOnly);
   if (cached) {
     console.log(`Response cache HIT (${Date.now() - startTime}ms)`);
     return { ...cached, session_id: session, _cached: true };
@@ -167,53 +162,43 @@ export async function enrichResponse(prompt, sessionId = null) {
     }
   }
 
-  // 2. Load campaign cache (in-memory)
-  const campaigns = await loadCampaignCache();
-
-  // 3. Hybrid matching
-  let bestCampaign = null;
-  let highestScore = -1;
-  let matchMethod = 'none';
-
-  const keywordMatch = keywordMatchFirst(prompt, campaigns);
-
-  if (keywordMatch && intentResult.intent === 'hot') {
-    bestCampaign = keywordMatch.campaign;
-    highestScore = 0.5 + keywordMatch.keywordScore * 0.5;
-    matchMethod = 'keyword-first';
-    console.log(`Keyword match: ${bestCampaign.name} (score: ${highestScore.toFixed(3)})`);
-  } else {
-    try {
-      const promptEmbedding = await embedText(prompt);
-
-      for (const campaign of campaigns) {
-        if (campaign.embedding && campaign.embedding.length > 0) {
-          const vectorScore = cosineSimilarity(promptEmbedding, campaign.embedding);
-
-          let keywordBoost = 0;
-          for (const kw of campaign.keywordSet) {
-            if (prompt.includes(kw)) keywordBoost += 0.1;
-          }
-
-          const finalScore = vectorScore + keywordBoost;
-          if (finalScore > highestScore) {
-            highestScore = finalScore;
-            bestCampaign = campaign;
-            matchMethod = keywordBoost > 0 ? 'vector+keyword' : 'embedding';
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Embedding/search failed:', err.message);
-    }
-  }
-
-  // 4. Generate response
+  // 2–4. Generate response (demo/chat uses answerOnly — never weave brands into the answer body)
   let finalResponse;
   let genUsage = null;
   let appliedCampaign = null;
+  let highestScore = -1;
+  let matchMethod = 'none';
 
-  if (bestCampaign && highestScore > SIMILARITY_THRESHOLD) {
+  if (answerOnly) {
+    try {
+      const result = await generateStandardContent(prompt, intentResult);
+      finalResponse = result.text;
+      genUsage = result.usage;
+    } catch (err) {
+      console.error('Standard response failed:', err.message);
+      finalResponse = "Savolingiz bo'yicha yordam bera olaman.";
+    }
+  } else {
+  const campaigns = await loadCampaignCache();
+  let bestCampaign = null;
+
+  try {
+    const match = await findBestCampaign(prompt, campaigns, {
+      servingContext: { sessionId: session },
+    });
+    bestCampaign = match.campaign;
+    highestScore = match.score;
+    matchMethod = match.method || 'none';
+    if (bestCampaign) {
+      console.log(`Matched: ${bestCampaign.name} (${match.method}, score: ${highestScore.toFixed(3)}, topic: ${match.dominantTopic || 'n/a'})`);
+    } else if (match.dominantTopic) {
+      console.log(`No campaign for detected topic "${match.dominantTopic}" — skipping ad`);
+    }
+  } catch (err) {
+    console.error('Campaign matching failed:', err.message);
+  }
+
+  if (bestCampaign) {
     appliedCampaign = bestCampaign;
     const generators = {
       hot: generateHotIntentResponse,
@@ -241,6 +226,7 @@ export async function enrichResponse(prompt, sessionId = null) {
       console.error('Standard response failed:', err.message);
       finalResponse = "I'm here to help. Could you rephrase your question?";
     }
+  }
   }
 
   // 5. Fire-and-forget analytics
@@ -272,8 +258,8 @@ export async function enrichResponse(prompt, sessionId = null) {
     },
   };
 
-  if (!appliedCampaign || intentResult.intent === 'cold') {
-    setCachedResponse(prompt, result);
+  if (answerOnly || !appliedCampaign || intentResult.intent === 'cold') {
+    setCachedResponse(prompt, result, answerOnly);
   }
 
   return result;
@@ -286,7 +272,7 @@ async function logAnalytics(sessionId, campaign, intent, score) {
   if (campaign) {
     ops.push(
       Event.create({ campaign_id: campaign._id, type: 'impression', session_id: sessionId, intent_type: intent.intent }),
-      Campaign.findByIdAndUpdate(campaign._id, { $inc: { spent: campaign.cpc_rate, today_impressions: 1 } })
+      incrementCampaignImpression(campaign._id, campaign.cpc_rate || 0)
     );
   }
 
@@ -341,10 +327,9 @@ JSON: {"intent":"cold|warm|hot","confidence":0.0-1.0,"signals":["s1"],"urgency":
 
 // --- Response Generators ---
 async function generateHotIntentResponse(prompt, campaign, intent) {
-  const trackingUrl = `http://localhost:3006/t/${campaign.tracking_code}`;
   const systemPrompt = `Synaptic AI — Intent-Based Conversational Commerce.
 INTENT: HOT (buy now) | URGENCY: ${intent.urgency}
-RULES: 1) Direct answer first 2) Natural recommendation 3) Mention deals/muddatli to'lov 4) Link: [${campaign.link_text}](${trackingUrl}) 5) Concise 6) Match language.
+RULES: 1) Direct answer first 2) Natural recommendation 3) Mention deals/muddatli to'lov 4) NEVER paste URLs — only mention brand by name: ${campaign.link_text || campaign.name} 5) Concise 6) Match language.
 BRAND: ${campaign.name} | ${campaign.category} | ${campaign.description}`;
 
   const response = await getClient().path("/chat/completions").post({
@@ -355,10 +340,9 @@ BRAND: ${campaign.name} | ${campaign.category} | ${campaign.description}`;
 }
 
 async function generateWarmIntentResponse(prompt, campaign, intent) {
-  const trackingUrl = `http://localhost:3006/t/${campaign.tracking_code}`;
   const systemPrompt = `Synaptic AI — Intent-Based Conversational Commerce.
 INTENT: WARM (comparing) | URGENCY: ${intent.urgency}
-RULES: 1) Comparative info 2) Educational 3) Campaign as one option 4) Link: [${campaign.link_text}](${trackingUrl}) 5) Match language.
+RULES: 1) Comparative info 2) Educational 3) Campaign as one option 4) NEVER paste URLs — brand name only: ${campaign.link_text || campaign.name} 5) Match language.
 BRAND: ${campaign.name} | ${campaign.category} | ${campaign.description}`;
 
   const response = await getClient().path("/chat/completions").post({
@@ -369,11 +353,10 @@ BRAND: ${campaign.name} | ${campaign.category} | ${campaign.description}`;
 }
 
 async function generateColdIntentResponse(prompt, campaign, intent) {
-  const trackingUrl = `http://localhost:3006/t/${campaign.tracking_code}`;
   const systemPrompt = `Synaptic AI — Intent-Based Conversational Commerce.
-INTENT: COLD (exploring)
-RULES: 1) Education first 2) No hard sell 3) Campaign as resource at END 4) Link: [${campaign.link_text}](${trackingUrl}) 5) Trust > conversion 6) Match language.
-BRAND: ${campaign.name} | ${campaign.category} | ${campaign.description}`;
+INTENT: COLD (exploring) | TOPIC: ${campaign.category}
+RULES: 1) Answer the user's question fully and accurately first 2) Only mention the brand at the end IF it directly relates to what the user asked 3) Never suggest unrelated products 4) NEVER paste URLs — brand name only: ${campaign.link_text || campaign.name} 5) Match language.
+BRAND (use only if relevant): ${campaign.name} | ${campaign.description}`;
 
   const response = await getClient().path("/chat/completions").post({
     body: { messages: [{ role: "system", content: systemPrompt }, { role: "user", content: prompt }], model: modelName, temperature: 0.5 }
@@ -386,8 +369,14 @@ async function generateStandardContent(prompt, intent) {
   const response = await getClient().path("/chat/completions").post({
     body: {
       messages: [
-        { role: "system", content: `Synaptic AI. Intent: ${intent.intent.toUpperCase()}. Answer helpfully. Match language.` },
-        { role: "user", content: prompt }
+        {
+          role: "system",
+          content: `Synaptic AI assistant. Intent: ${intent.intent.toUpperCase()}.
+Answer the user's question directly and completely. Match their language (Uzbek/Russian/English).
+Do NOT mention sponsors, ads, brands, stores, or product links.
+For informational questions (sports, companies, universities, visas, statistics) give facts only — never pivot to unrelated shopping.`,
+        },
+        { role: "user", content: prompt },
       ],
       model: modelName,
     }
