@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-import { MousePointerClick, DollarSign, TrendingDown, Zap } from 'lucide-react';
+import { MousePointerClick, Eye, Wallet, Zap } from 'lucide-react';
 import { api } from '../../lib/api';
 import {
   Select,
@@ -71,8 +71,7 @@ export default function BusinessAnalytics() {
 
   const { totals, daily_stats = [], campaign } = dashboard || { totals: { clicks: 0, impressions: 0, ctr: '0%' }, daily_stats: [], campaign: {} };
 
-  // Calculate CPC trend and format for charts
-  const avgCostPerClick = campaign.cpc_rate ? (campaign.cpc_rate / 1000).toFixed(2) : "0.00"; // Assuming cpc_rate is in UZS, convert to a display friendly number for demo or leave it
+  // Format daily stats for charts
   
   const dailyClicksData = daily_stats.map((d: any) => ({
     day: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
@@ -133,23 +132,23 @@ export default function BusinessAnalytics() {
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
-                    <DollarSign className="w-6 h-6 text-[#0000FF]" />
+                    <Eye className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">Average</span>
+                  <span className="text-sm text-black/60">7 Days</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Cost Per Click (UZS)</p>
-                <p className="text-3xl font-bold text-black">{campaign.cpc_rate || 0}</p>
+                <p className="text-black/60 text-sm mb-1">Total Impressions</p>
+                <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString()}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
-                    <TrendingDown className="w-6 h-6 text-[#0000FF]" />
+                    <Wallet className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">7 Days</span>
+                  <span className="text-sm text-black/60">Lifetime</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Spent</p>
-                <p className="text-3xl font-bold text-black">{((totals.clicks * (campaign.cpc_rate || 0)) / 1000).toLocaleString()}K UZS</p>
+                <p className="text-black/60 text-sm mb-1">Campaign Budget</p>
+                <p className="text-3xl font-bold text-black">{(campaign.budget || 0).toLocaleString()} UZS</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">

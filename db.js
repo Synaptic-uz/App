@@ -3,13 +3,18 @@ if (!globalThis.crypto) globalThis.crypto = crypto;
 
 import mongoose from 'mongoose';
 import { embedText } from './embeddings.js';
+import { buildCampaignProfileText, defaultSubcategory } from './categories.js';
 
 const URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/synaptic-ai';
 
 let isConnected = false;
 
+export function isDbConnected() {
+  return isConnected && mongoose.connection.readyState === 1;
+}
+
 export async function connectDB() {
-  if (isConnected) return;
+  if (isConnected) return true;
   try {
     await mongoose.connect(URI, {
       maxPoolSize: 20,
@@ -19,14 +24,20 @@ export async function connectDB() {
     isConnected = true;
     console.log("Connected to MongoDB via Mongoose (pool: 20)");
     await seedDatabase();
+    return true;
   } catch (error) {
-    console.error("MongoDB connection error:", error);
+    isConnected = false;
+    console.error("MongoDB connection error:", error.message || error);
+    throw error;
   }
 }
 
 const campaignSchema = new mongoose.Schema({
   name: { type: String, required: true },
   category: { type: String, required: true },
+  subcategory: { type: String, default: 'general' },
+  custom_category: { type: String, default: '' },
+  niche_keywords: { type: [String], default: [] },
   brand_url: { type: String, required: true },
   link_text: { type: String, required: true },
   tagline: { type: String, default: "" },
@@ -45,6 +56,8 @@ const campaignSchema = new mongoose.Schema({
   max_daily_impressions: { type: Number, default: 1000 },
   today_impressions: { type: Number, default: 0 },
   last_reset_date: { type: Date, default: Date.now },
+  stats_impressions: { type: Number, default: 0 },
+  stats_clicks: { type: Number, default: 0 },
   owner_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
 }, { timestamps: true });
 
@@ -65,6 +78,8 @@ export const User = mongoose.model('User', userSchema);
 const eventSchema = new mongoose.Schema({
   campaign_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Campaign', index: true },
   agent_id: { type: String, default: null, index: true },
+  session_id: { type: String, default: null, index: true },
+  intent_type: { type: String, default: null },
   type: { type: String, enum: ['impression', 'click', 'conversion'], required: true },
   user_prompt: { type: String, default: null },
   conversion_value: { type: Number, default: 0 },
@@ -111,117 +126,167 @@ sessionSchema.index({ matched_campaign_id: 1 });
 
 export const Session = mongoose.model('Session', sessionSchema);
 
-async function seedDatabase() {
-  const count = await Campaign.countDocuments();
-  if (count === 0) {
-    console.log("Seeding campaigns with Uzbekistan market data...");
+/** Load impression/click totals into in-memory ranking CTR cache (pass bulkLoadCtr from adRanking). */
+export async function bootstrapRankingStats(bulkLoadCtr) {
+  const rows = await Campaign.find({})
+    .select('_id stats_impressions stats_clicks')
+    .lean();
+  bulkLoadCtr(
+    rows.map((r) => ({
+      _id: r._id,
+      impressions: r.stats_impressions || 0,
+      clicks: r.stats_clicks || 0,
+    }))
+  );
+}
 
-    const embedCoffee = await embedText("coffee beans brewing espresso cappuccino latte cafe beverage drink roasting qahva ichimlik");
-    const embedTech = await embedText("laptop noutbuk computer telefon smartphone iPhone Samsung electronics texnika gadjet");
-    const embedTravel = await embedText("travel flights hotels vacation sightseeing tourism booking sayohat chipta mehmonxona");
-    const embedFashion = await embedText("fashion clothing kiyim shoes oyoq kiyim dress moda style fashion trend");
-    const embedFinance = await embedText("finance credit loan muddatli tolov installment payment bank kredit pul money");
-    const embedFood = await embedText("food delivery yetkazib berish pizza sushi restaurant ovqat taom fast food");
+export async function incrementCampaignImpression(campaignId, cpcRate = 0) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const campaign = await Campaign.findById(campaignId).select('last_reset_date today_impressions').lean();
+  if (!campaign) return;
+
+  const last = campaign.last_reset_date ? new Date(campaign.last_reset_date) : null;
+  const sameDay = last && last.toDateString() === today.toDateString();
+
+  if (sameDay) {
+    await Campaign.updateOne(
+      { _id: campaignId },
+      { $inc: { today_impressions: 1, stats_impressions: 1, spent: cpcRate } }
+    );
+  } else {
+    await Campaign.updateOne(
+      { _id: campaignId },
+      {
+        $set: { today_impressions: 1, last_reset_date: today },
+        $inc: { stats_impressions: 1, spent: cpcRate },
+      }
+    );
+  }
+}
+
+async function embedForCampaign(doc) {
+  return embedText(buildCampaignProfileText(doc));
+}
+
+/** Keep only UZ-market demo campaigns; deactivate legacy US/global seeds. */
+async function migrateCampaignCatalog() {
+  await Campaign.updateMany(
+    { tracking_code: { $in: ['bb-coffee-123', 'do-cloud-456', 'ab-travel-789', 'upg-gaming-006'] } },
+    { $set: { active: 0 } }
+  );
+
+  const patches = [
+    {
+      tracking_code: 'uzum-electronics-001',
+      set: {
+        category: 'electronics',
+        subcategory: 'general',
+        niche_keywords: [],
+        tagline: "O'zbekistonning eng yirik marketplace — telefon, noutbuk, muddatli to'lov",
+        keywords: ['noutbuk', 'telefon', 'iphone', 'samsung', 'elektronika', 'laptop', 'texnika', 'gadjet', 'smartphone'],
+        active: 1,
+      },
+    },
+    {
+      tracking_code: 'olcha-electronics-002',
+      set: {
+        category: 'electronics',
+        subcategory: 'general',
+        niche_keywords: [],
+        tagline: "Texnika va elektronika — telefon, noutbuk, muddatli to'lov",
+        keywords: ['noutbuk', 'kompyuter', 'telefon', 'muddatli tolov', 'texnika', 'iphone', 'laptop', 'smartphone'],
+        active: 1,
+      },
+    },
+    {
+      tracking_code: 'zood-finance-003',
+      set: { category: 'finance', subcategory: 'installment', active: 1 },
+    },
+    {
+      tracking_code: 'yandex-food-004',
+      set: { category: 'food', subcategory: 'delivery', active: 1 },
+    },
+    {
+      tracking_code: 'moda-fashion-005',
+      set: { category: 'fashion', subcategory: 'general', active: 1 },
+    },
+  ];
+
+  for (const { tracking_code, set } of patches) {
+    const exists = await Campaign.findOne({ tracking_code });
+    if (exists) {
+      await Campaign.updateOne({ tracking_code }, { $set: set });
+      if (process.env.GITHUB_TOKEN) {
+        const merged = { ...exists.toObject(), ...set };
+        const embedding = await embedForCampaign(merged);
+        await Campaign.updateOne({ tracking_code }, { $set: { embedding } });
+      }
+    }
+  }
+
+}
+
+async function seedDatabase() {
+  await migrateCampaignCatalog();
+
+  const count = await Campaign.countDocuments({ active: { $in: [1, true] } });
+
+  if (count < 4 && process.env.GITHUB_TOKEN) {
+    console.log("Seeding core Uzbekistan campaigns...");
+
+    const embedTech = await embedText(buildCampaignProfileText({
+      name: 'Uzum Market', category: 'electronics', subcategory: 'general',
+      tagline: "Marketplace telefon noutbuk", keywords: ['noutbuk', 'telefon'], niche_keywords: [],
+    }));
+    const embedFashion = await embedText("fashion kiyim moda oyoq kiyim");
+    const embedFinance = await embedText("muddatli tolov kredit installment");
+    const embedFood = await embedText("food delivery yetkazib pizza ovqat");
 
     await Campaign.insertMany([
       {
         name: 'Uzum Market',
         category: 'electronics',
+        subcategory: 'general',
+        niche_keywords: [],
         brand_url: 'https://uzum.market',
         link_text: 'Uzum Market',
-        tagline: "O'zbekistonning eng yirik marketplace — muddatli to'lov va bepul yetkazish bilan",
+        tagline: "O'zbekistonning eng yirik marketplace — telefon, noutbuk, muddatli to'lov",
         tracking_code: 'uzum-electronics-001',
         embedding: embedTech,
-        description: "O'zbekistonning eng yirik onlayn marketplace. Elektronika, kiyim, uy jihozlari va boshqa ko'plab mahsulotlar.",
-        keywords: ['noutbuk', 'telefon', 'iPhone', 'Samsung', 'elektronika', 'laptop', 'texnika', 'gadjet'],
+        description: "Onlayn marketplace: telefon, noutbuk, elektronika.",
+        keywords: ['noutbuk', 'telefon', 'iphone', 'samsung', 'elektronika', 'laptop', 'texnika', 'gadjet'],
         cpc_rate: 500,
-        cpa_rate: 0,
         cpa_percentage: 3,
         tone: 'deal-focused',
         source: 'partner',
         budget: 1000000,
-        spent: 0,
         max_daily_impressions: 5000,
       },
       {
         name: 'Olcha Market',
         category: 'electronics',
+        subcategory: 'general',
+        niche_keywords: [],
         brand_url: 'https://olcha.uz',
         link_text: 'Olcha Market',
-        tagline: "Texnika va elektronika do'koni — muddatli to'lov imkoniyati bilan",
+        tagline: "Texnika va elektronika — telefon, noutbuk, muddatli to'lov",
         tracking_code: 'olcha-electronics-002',
         embedding: embedTech,
-        description: "Texnika va elektronika do'koni. Muddatli to'lov imkoniyati bilan.",
-        keywords: ['noutbuk', 'kompyuter', 'telefon', 'muddatli tolov', 'texnika', 'iPhone'],
+        description: "Texnika va elektronika do'koni.",
+        keywords: ['noutbuk', 'kompyuter', 'telefon', 'muddatli tolov', 'texnika', 'iphone', 'laptop'],
         cpc_rate: 400,
-        cpa_rate: 0,
         cpa_percentage: 2.5,
         tone: 'comparative',
         source: 'partner',
         budget: 800000,
-        spent: 0,
         max_daily_impressions: 3000,
-      },
-      {
-        name: 'Blue Bottle Coffee',
-        category: 'coffee',
-        brand_url: 'https://www.bluebottlecoffee.com',
-        link_text: 'Blue Bottle',
-        tagline: "Premium coffee beans and brewing equipment delivered to your door",
-        tracking_code: 'bb-coffee-123',
-        embedding: embedCoffee,
-        description: "Premium coffee beans and brewing equipment.",
-        keywords: ['coffee', 'qahva', 'espresso', 'cappuccino', 'latte'],
-        cpc_rate: 300,
-        cpa_rate: 0,
-        cpa_percentage: 5,
-        tone: 'informative',
-        source: 'seed',
-        budget: 500000,
-        spent: 0,
-        max_daily_impressions: 2000,
-      },
-      {
-        name: 'DigitalOcean',
-        category: 'coding',
-        brand_url: 'https://www.digitalocean.com',
-        link_text: 'DigitalOcean',
-        tagline: "Cloud hosting and developer infrastructure — start free today",
-        tracking_code: 'do-cloud-456',
-        embedding: embedTech,
-        description: "Cloud hosting and developer infrastructure.",
-        keywords: ['coding', 'cloud', 'hosting', 'server', 'developer'],
-        cpc_rate: 1000,
-        cpa_rate: 0,
-        cpa_percentage: 10,
-        tone: 'informative',
-        source: 'seed',
-        budget: 2000000,
-        spent: 0,
-        max_daily_impressions: 5000,
-      },
-      {
-        name: 'Airbnb',
-        category: 'travel',
-        brand_url: 'https://www.airbnb.com',
-        link_text: 'Airbnb',
-        tagline: "Worldwide vacation rentals — find your next adventure",
-        tracking_code: 'ab-travel-789',
-        embedding: embedTravel,
-        description: "Worldwide vacation rentals and experiences.",
-        keywords: ['travel', 'hotel', 'vacation', 'sayohat', 'sayohatga', 'turizm', 'mehmonxona', 'chipta', 'ta\'til', 'parij', 'istanbul'],
-        cpc_rate: 800,
-        cpa_rate: 0,
-        cpa_percentage: 4,
-        tone: 'promotional',
-        source: 'seed',
-        budget: 1500000,
-        spent: 0,
-        max_daily_impressions: 4000,
       },
       {
         name: 'ZoodMall',
         category: 'finance',
+        subcategory: 'installment',
+        niche_keywords: [],
         brand_url: 'https://zoodmall.com',
         link_text: 'ZoodMall',
         tagline: "0% ustama bilan 6-12 oyga bo'lib to'lash — hoziroq xarid qiling",
@@ -241,6 +306,8 @@ async function seedDatabase() {
       {
         name: 'Yandex Eats',
         category: 'food',
+        subcategory: 'delivery',
+        niche_keywords: [],
         brand_url: 'https://eda.yandex.uz',
         link_text: 'Yandex Eats',
         tagline: "Tezkor yetkazib berish — eng yaxshi restaurantlardan buyurtma qiling",
@@ -260,6 +327,8 @@ async function seedDatabase() {
       {
         name: 'Moda.uz',
         category: 'fashion',
+        subcategory: 'general',
+        niche_keywords: [],
         brand_url: 'https://moda.uz',
         link_text: 'Moda.uz',
         tagline: "O'zbekistondagi eng katta moda do'koni — trend kiyimlar va oyoq kiyimlar",
@@ -277,24 +346,60 @@ async function seedDatabase() {
         max_daily_impressions: 2500,
       },
     ]);
-    console.log("Seed data with Uzbekistan market campaigns created.");
-  }
-
-  // Keep travel campaign keywords up to date for better matching
-  await Campaign.updateOne(
-    { tracking_code: 'ab-travel-789' },
-    {
-      $set: {
-        keywords: ['travel', 'hotel', 'vacation', 'sayohat', 'sayohatga', 'turizm', 'mehmonxona', 'chipta', "ta'til", 'parij', 'istanbul'],
+    console.log("Core campaigns seeded.");
+  } else if (count < 4) {
+    console.warn('GITHUB_TOKEN not set — seeding campaigns without embeddings (keyword matching only)');
+    await Campaign.insertMany([
+      {
+        name: 'Uzum Market',
+        category: 'electronics',
+        subcategory: 'general',
+        brand_url: 'https://uzum.market',
+        link_text: 'Uzum Market',
+        tagline: "Telefon, noutbuk, muddatli to'lov",
+        tracking_code: 'uzum-electronics-001',
+        keywords: ['noutbuk', 'telefon', 'iphone', 'laptop', 'elektronika', 'texnika'],
+        active: 1,
+        source: 'seed',
       },
-    }
-  );
-
-  // Ensure all seed campaigns stay active
-  await Campaign.updateMany(
-    { source: { $in: ['partner', 'seed'] } },
-    { $set: { active: 1 } }
-  );
+      {
+        name: 'Olcha Market',
+        category: 'electronics',
+        subcategory: 'general',
+        brand_url: 'https://olcha.uz',
+        link_text: 'Olcha Market',
+        tagline: "Texnika va elektronika",
+        tracking_code: 'olcha-electronics-002',
+        keywords: ['noutbuk', 'kompyuter', 'telefon', 'iphone', 'laptop'],
+        active: 1,
+        source: 'seed',
+      },
+      {
+        name: 'Yandex Eats',
+        category: 'food',
+        subcategory: 'delivery',
+        brand_url: 'https://eda.yandex.uz',
+        link_text: 'Yandex Eats',
+        tagline: 'Tezkor yetkazib berish',
+        tracking_code: 'yandex-food-004',
+        keywords: ['yetkazib', 'delivery', 'ovqat', 'pizza', 'taom'],
+        active: 1,
+        source: 'seed',
+      },
+      {
+        name: 'Moda.uz',
+        category: 'fashion',
+        subcategory: 'general',
+        brand_url: 'https://moda.uz',
+        link_text: 'Moda.uz',
+        tagline: "Moda va kiyim-kechak",
+        tracking_code: 'moda-fashion-005',
+        keywords: ['kiyim', 'moda', 'fashion', 'oyoq kiyim'],
+        active: 1,
+        source: 'seed',
+      },
+    ]);
+  }
 
   // Always ensure demo API key exists (required for /authorized/send_result testing)
   const { hashApiKey } = await import('./agentAuth.js');

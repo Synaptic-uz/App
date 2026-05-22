@@ -1,7 +1,8 @@
 import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
 import { AzureKeyCredential } from "@azure/core-auth";
-import { Campaign, Event, Session } from './db.js';
+import { Campaign, Event, Session, incrementCampaignImpression } from './db.js';
 import { findBestCampaign } from './campaignMatcher.js';
+import { syncCampaignStats } from './adRanking.js';
 import { nanoid } from 'nanoid';
 import crypto from 'crypto';
 
@@ -28,7 +29,7 @@ export async function loadCampaignCache() {
     return campaignCache;
   }
 
-  const campaigns = await Campaign.find({ active: 1 }).select('+embedding').lean();
+  const campaigns = await Campaign.find({ active: { $in: [1, true] } }).select('+embedding').lean();
   campaignCache = campaigns.map(c => ({
     _id: c._id,
     name: c.name,
@@ -41,9 +42,19 @@ export async function loadCampaignCache() {
     cpc_rate: c.cpc_rate || 0,
     cpa_percentage: c.cpa_percentage || 0,
     tone: c.tone || 'informative',
+    subcategory: c.subcategory || 'general',
+    custom_category: c.custom_category || '',
+    niche_keywords: c.niche_keywords || [],
+    owner_id: c.owner_id,
+    max_daily_impressions: c.max_daily_impressions,
+    today_impressions: c.today_impressions,
+    last_reset_date: c.last_reset_date,
+    stats_impressions: c.stats_impressions,
+    stats_clicks: c.stats_clicks,
     embedding: c.embedding,
     keywordSet: new Set((c.keywords || []).map(k => k.toLowerCase())),
   }));
+  syncCampaignStats(campaignCache);
   campaignCacheLoaded = true;
   campaignCacheTimestamp = Date.now();
   console.log(`Campaign cache loaded: ${campaignCache.length} campaigns`);
@@ -172,7 +183,9 @@ export async function enrichResponse(prompt, sessionId = null, options = {}) {
   let bestCampaign = null;
 
   try {
-    const match = await findBestCampaign(prompt, campaigns);
+    const match = await findBestCampaign(prompt, campaigns, {
+      servingContext: { sessionId: session },
+    });
     bestCampaign = match.campaign;
     highestScore = match.score;
     matchMethod = match.method || 'none';
@@ -259,7 +272,7 @@ async function logAnalytics(sessionId, campaign, intent, score) {
   if (campaign) {
     ops.push(
       Event.create({ campaign_id: campaign._id, type: 'impression', session_id: sessionId, intent_type: intent.intent }),
-      Campaign.findByIdAndUpdate(campaign._id, { $inc: { spent: campaign.cpc_rate, today_impressions: 1 } })
+      incrementCampaignImpression(campaign._id, campaign.cpc_rate || 0)
     );
   }
 

@@ -4,11 +4,22 @@ if (!globalThis.crypto) globalThis.crypto = crypto;
 
 import express from 'express';
 import cors from 'cors';
-import { connectDB, Campaign, Event, Agent, Session, User } from './db.js';
+import {
+  connectDB,
+  Campaign,
+  Event,
+  Agent,
+  Session,
+  User,
+  incrementCampaignImpression,
+  bootstrapRankingStats,
+} from './db.js';
+import { bulkLoadCtr, recordClick, clearServingState } from './adRanking.js';
 import { enrichResponse, loadCampaignCache } from './enrichment.js';
 import { nanoid } from 'nanoid';
 import { embedText } from './embeddings.js';
 import { findBestCampaign } from './campaignMatcher.js';
+import { getCategoryOptions, buildCampaignProfileText, defaultSubcategory, displayCategory } from './categories.js';
 import { agentAuth, hashApiKey, generateApiKey } from './agentAuth.js';
 import {
   buildSuggestion,
@@ -16,6 +27,7 @@ import {
   buildTrackingUrl,
   buildDisplayPath,
   formatSponsoredAppend,
+  isCampaignServeReady,
 } from './suggestion.js';
 import { generateToken, authenticateToken, hashPassword, comparePassword } from './auth.js';
 
@@ -148,21 +160,31 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
   try {
     const activeCampaigns = await Campaign.find({
       active: { $in: [1, true] },
-    }).select('+embedding').lean();
+    })
+      .select('+embedding name tracking_code brand_url link_text keywords niche_keywords custom_category subcategory category tagline description')
+      .lean();
 
-    const matchResult = await findBestCampaign(prompt, activeCampaigns);
-    const { campaign: bestCampaign, score: highestScore, method: matchMethod } = matchResult;
+    const matchResult = await findBestCampaign(prompt, activeCampaigns, {
+      servingContext: { agentId: agent.username },
+    });
+    const { campaign: bestCampaign, method: matchMethod } = matchResult;
 
-    if (!bestCampaign) {
-      console.log(
-        `[send_result] no match | method=${matchMethod} | campaigns=${activeCampaigns.length} | prompt="${prompt.substring(0, 80)}"`
-      );
+    if (!bestCampaign || !isCampaignServeReady(bestCampaign)) {
+      if (bestCampaign && !isCampaignServeReady(bestCampaign)) {
+        console.warn(`[send_result] matched campaign incomplete: ${bestCampaign.tracking_code || bestCampaign._id}`);
+      } else {
+        console.log(
+          `[send_result] no match | method=${matchMethod} | campaigns=${activeCampaigns.length} | prompt="${prompt.substring(0, 80)}"`
+        );
+      }
+      return res.json({ match: false });
     }
 
-    if (bestCampaign) {
+    {
       const suggestion = buildSuggestion(bestCampaign);
       const cta_label = buildCtaLabel(bestCampaign);
       const tracking_url = buildTrackingUrl(req, bestCampaign.tracking_code, agent.username);
+      if (!tracking_url) return res.json({ match: false });
 
       Event.create({
         campaign_id: bestCampaign._id,
@@ -171,6 +193,7 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
         user_prompt: prompt.substring(0, 500),
       }).catch(() => {});
 
+      incrementCampaignImpression(bestCampaign._id, bestCampaign.cpc_rate || 0).catch(() => {});
       Agent.updateOne({ _id: agent._id }, { $inc: { total_impressions: 1 } }).catch(() => {});
 
       return res.json({
@@ -184,13 +207,12 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
         campaign: {
           name: bestCampaign.name,
           category: bestCampaign.category,
+          category_label: displayCategory(bestCampaign),
           link_text: bestCampaign.link_text,
+          brand_url: bestCampaign.brand_url,
         },
       });
     }
-
-    // No match: return only match:false so agents keep their own answer unchanged
-    return res.json({ match: false });
 
   } catch (error) {
     console.error('B2B Query Error:', error);
@@ -303,19 +325,25 @@ app.get('/t/:code', async (req, res) => {
   const agentId = req.query.a;
 
   try {
-    const campaign = await Campaign.findOne({ tracking_code: code }).select('_id brand_url cpc_rate').lean();
-    if (campaign) {
+    const campaign = await Campaign.findOne({ tracking_code: code, active: { $in: [1, true] } })
+      .select('_id brand_url cpc_rate')
+      .lean();
+    const dest = campaign?.brand_url?.trim();
+    if (campaign && dest && /^https?:\/\//i.test(dest)) {
       Event.create({
         campaign_id: campaign._id,
         agent_id: agentId || null,
         type: 'click'
       }).catch(() => {});
 
+      recordClick(campaign._id);
+      Campaign.updateOne({ _id: campaign._id }, { $inc: { stats_clicks: 1 } }).catch(() => {});
+
       if (agentId) {
         Agent.updateOne({ username: agentId }, { $inc: { total_clicks: 1 } }).catch(() => {});
       }
 
-      return res.redirect(campaign.brand_url);
+      return res.redirect(dest);
     }
     res.status(404).send('Invalid tracking link');
   } catch (error) {
@@ -442,6 +470,10 @@ app.get('/api/dashboard/:campaignId', authenticateToken, async (req, res) => {
 
 // --- Campaign CRUD ---
 
+app.get('/api/categories', (_req, res) => {
+  res.json(getCategoryOptions());
+});
+
 app.get('/api/campaigns', authenticateToken, async (req, res) => {
   try {
     const query = req.user.role === 'business' ? { owner_id: req.user.id } : {};
@@ -457,23 +489,46 @@ app.post('/api/campaigns', authenticateToken, async (req, res) => {
     return res.status(403).json({ error: 'Only business accounts can create campaigns' });
   }
 
-  const { name, category, brand_url, link_text, tagline, description, keywords, cpc_rate, cpa_percentage, tone, budget } = req.body;
+  const {
+    name, category, subcategory, custom_category, brand_url, link_text, tagline, description,
+    keywords, niche_keywords, cpc_rate, cpa_percentage, tone, budget,
+  } = req.body;
   const tracking_code = nanoid(10);
 
   if (!name || !category || !brand_url) {
     return res.status(400).json({ error: 'Name, category, and brand URL are required' });
   }
 
+  if (category === 'other' && !custom_category?.trim()) {
+    return res.status(400).json({ error: 'Please describe your category when using Other' });
+  }
+
+  const kwList = Array.isArray(keywords) ? keywords.filter(Boolean) : [];
+  if (kwList.length === 0) {
+    return res.status(400).json({ error: 'At least one keyword is required for matching' });
+  }
+
+  const sub = subcategory || defaultSubcategory(category);
+
   try {
-    const promptContext = `${name} ${category} ${description || ''} ${(keywords || []).join(' ')} ${brand_url}`;
-    const embedding = await embedText(promptContext);
+    const profile = {
+      name, category, subcategory: sub, custom_category: custom_category?.trim() || '',
+      tagline, description,
+      keywords: kwList, niche_keywords: niche_keywords || [],
+    };
+    const embedding = await embedText(buildCampaignProfileText(profile));
 
     const campaign = await Campaign.create({
-      name, category, brand_url, link_text: link_text || name, tagline: tagline || '', tracking_code, embedding,
-      description: description || '', keywords: keywords || [],
+      name, category, subcategory: sub,
+      custom_category: custom_category?.trim() || '',
+      brand_url,
+      link_text: link_text || name, tagline: tagline || '', tracking_code, embedding,
+      description: description || '', keywords: kwList,
+      niche_keywords: niche_keywords || [],
       cpc_rate: cpc_rate || 0, cpa_percentage: cpa_percentage || 0,
       tone: tone || 'informative', budget: budget || 0, source: 'partner',
-      owner_id: req.user.id
+      owner_id: req.user.id,
+      active: 1,
     });
 
     loadCampaignCache();
@@ -488,9 +543,15 @@ app.put('/api/campaigns/:id', authenticateToken, async (req, res) => {
     const campaign = await Campaign.findOne({ _id: req.params.id, owner_id: req.user.id });
     if (!campaign) return res.status(404).json({ error: 'Campaign not found or unauthorized' });
     
-    Object.assign(campaign, req.body);
+    const fields = ['name', 'category', 'subcategory', 'custom_category', 'tagline', 'description', 'keywords', 'niche_keywords'];
+    for (const f of fields) {
+      if (req.body[f] !== undefined) campaign[f] = req.body[f];
+    }
+    if (process.env.GITHUB_TOKEN) {
+      campaign.embedding = await embedText(buildCampaignProfileText(campaign));
+    }
     await campaign.save();
-    
+
     loadCampaignCache();
     res.json(campaign);
   } catch (error) {
@@ -525,16 +586,22 @@ app.get('/api/sessions', async (req, res) => {
 // --- Cache Invalidation ---
 app.post('/api/cache/clear', async (req, res) => {
   analyticsCache = { data: null, timestamp: 0 };
+  clearServingState();
   await loadCampaignCache();
+  await bootstrapRankingStats(bulkLoadCtr);
   res.json({ success: true });
 });
 
 connectDB().then(async () => {
   loadCampaignCache();
+  await bootstrapRankingStats(bulkLoadCtr);
   const campaignCount = await Campaign.countDocuments({ active: { $in: [1, true] } });
   const demoAgent = await Agent.findOne({ username: 'demo-telegram-bot' });
   console.log(`Active campaigns: ${campaignCount} | Demo agent: ${demoAgent ? 'ok' : 'MISSING'}`);
   app.listen(PORT, () => {
     console.log(`Synaptic AI(SI) Backend running on http://localhost:${PORT}`);
   });
-}).catch(console.error);
+}).catch((err) => {
+  console.error('Cannot start — MongoDB required:', err.message || err);
+  process.exit(1);
+});

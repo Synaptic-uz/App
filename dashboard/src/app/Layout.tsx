@@ -26,7 +26,7 @@ export default function Layout() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans">
+    <div className="h-screen bg-white flex flex-col font-sans overflow-hidden">
       {/* Header */}
       <header className="border-b-2 border-black/10 bg-white">
         <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
@@ -95,7 +95,7 @@ export default function Layout() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
         <Outlet />
       </main>
     </div>

@@ -45,6 +45,12 @@ export const api = {
     return parseJsonResponse(res);
   },
 
+  getCategories: async () => {
+    const res = await fetch(`${API_BASE}/categories`);
+    if (!res.ok) throw new Error('Failed to load categories');
+    return res.json();
+  },
+
   // Campaigns
   getCampaigns: async () => {
     const res = await fetch(`${API_BASE}/campaigns`, { headers: getHeaders() });

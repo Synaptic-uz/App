@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Send, Bot } from 'lucide-react';
 import { api } from '../../lib/api';
 
 type Message = {
@@ -13,6 +13,8 @@ type Message = {
     cta_label?: string;
   };
 };
+
+const MAX_INPUT_HEIGHT = 120;
 
 /** Remove raw URLs from visible chat text — links live on the button only. */
 function maskVisibleUrls(text: string) {
@@ -58,14 +60,30 @@ export default function ChatDemo() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollToBottom = useCallback(() => {
+    const el = messagesContainerRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, []);
+
+  const resizeTextarea = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, MAX_INPUT_HEIGHT)}px`;
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isTyping, scrollToBottom]);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [input, resizeTextarea]);
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -73,36 +91,45 @@ export default function ChatDemo() {
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: input,
+      text: input.trim(),
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     setIsTyping(true);
 
     try {
-      // 1. Bot's own answer (always) — via enrich
       let answer = FALLBACK_ANSWER;
       try {
         const enrich = await api.enrich(userMsg.text, { answerOnly: true });
         if (enrich?.text) answer = maskVisibleUrls(enrich.text);
       } catch {
-        // Keep fallback answer; never show error-style text to the user
+        /* keep fallback */
       }
 
-      // 2. Sponsored slot (optional) — via B2B API; match:false means append nothing
       let sponsored: { suggestion: string; tracking_url?: string; cta_label?: string } | undefined;
       try {
         const synaptic = await api.sendResult(userMsg.text, 'sk-synaptic-demo');
-        if (synaptic?.match && synaptic.suggestion) {
+        const hasValidLink =
+          typeof synaptic?.tracking_url === 'string' &&
+          synaptic.tracking_url.includes('/t/') &&
+          !synaptic.tracking_url.includes('/t/undefined');
+        const hasCopy =
+          typeof synaptic?.suggestion === 'string' &&
+          synaptic.suggestion.length > 20 &&
+          synaptic.campaign?.name;
+        if (synaptic?.match && hasCopy && hasValidLink) {
           sponsored = {
             suggestion: synaptic.suggestion,
             tracking_url: synaptic.tracking_url,
-            cta_label: synaptic.cta_label || synaptic.campaign?.link_text,
+            cta_label: synaptic.cta_label || synaptic.campaign?.link_text || synaptic.campaign?.name,
           };
         }
       } catch {
-        // Sponsored lookup failed — still show the bot answer only
+        /* sponsored optional */
       }
 
       const { text, ad } = buildBotMessage(answer, sponsored);
@@ -121,126 +148,130 @@ export default function ChatDemo() {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
   };
 
-  return (
-    <div className="size-full bg-[#e4ecef] overflow-hidden flex flex-col items-center">
-      <div className="w-full max-w-2xl h-full bg-white shadow-xl flex flex-col">
-        <div className="bg-[#17212b] px-4 py-3 flex items-center gap-4 text-white shrink-0">
-          <div className="w-10 h-10 bg-gradient-to-tr from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-            <Bot className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-lg leading-tight">Synaptic Demo Bot</h2>
-            <p className="text-[#7f91a4] text-sm">bot</p>
-          </div>
-        </div>
+  const quickPrompts = [
+    'iPhone 15 narxlari qancha?',
+    'Noutbuk sotib olmoqchiman',
+    'Kofe ichmoqchi edim',
+    'Muddatli tolov bilan xarid',
+    'Kiyim-kechak qayerdan olsam boladi?',
+  ];
 
-        <div
-          className="flex-1 overflow-y-auto p-4 bg-[#0e1621] space-y-4"
-          style={{
-            backgroundImage: "url('https://web.telegram.org/a/chat-bg-pattern-dark.png')",
-            backgroundBlendMode: 'overlay',
-            backgroundColor: '#0e1621',
-          }}
-        >
-          {messages.map((msg) => (
+  return (
+    <div className="flex flex-col flex-1 min-h-0 w-full h-full bg-[#f0f2f5]">
+      {/* Header */}
+      <div className="shrink-0 bg-white border-b border-black/10 px-5 py-3 flex items-center gap-3 shadow-sm">
+        <div className="w-10 h-10 bg-[#3390ec] rounded-full flex items-center justify-center shrink-0">
+          <Bot className="w-5 h-5 text-white" />
+        </div>
+        <div className="min-w-0">
+          <h2 className="font-semibold text-base text-black leading-tight">Synaptic Demo Bot</h2>
+          <p className="text-black/45 text-sm">{isTyping ? 'typing…' : 'online'}</p>
+        </div>
+      </div>
+
+      {/* Messages — fixed height region, scroll inside */}
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-3 bg-[#f0f2f5]"
+      >
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div
-              key={msg.id}
-              className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`max-w-[min(85%,520px)] rounded-2xl px-4 py-2.5 shadow-sm ${
+                msg.sender === 'user'
+                  ? 'bg-[#3390ec] text-white rounded-br-md'
+                  : 'bg-white text-black border border-black/5 rounded-bl-md'
+              }`}
             >
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2 ${
-                  msg.sender === 'user'
-                    ? 'bg-[#2b5278] text-white rounded-br-none'
-                    : 'bg-[#182533] text-white rounded-bl-none'
+                className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
+                  msg.sender === 'user' ? 'text-white' : 'text-black/90'
                 }`}
               >
-                <div className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.text}</div>
-
-                {msg.sender === 'bot' && msg.ad?.match && msg.ad.tracking_url && (
-                  <div className="mt-3 pt-3 border-t border-white/10">
-                    <a
-                      href={msg.ad.tracking_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-center w-full bg-[#17212b] hover:bg-[#2b5278] border border-[#2b5278] transition-colors rounded-lg py-2.5 text-sm font-medium text-[#5eb5f7]"
-                    >
-                      {msg.ad.cta_label || "Batafsil ma'lumot"}
-                    </a>
-                  </div>
-                )}
+                {msg.text}
               </div>
-            </div>
-          ))}
-          {isTyping && (
-            <div className="flex w-full justify-start">
-              <div className="bg-[#182533] text-white rounded-2xl rounded-bl-none px-4 py-3 flex gap-1">
-                <div className="w-2 h-2 bg-[#7f91a4] rounded-full animate-bounce" />
-                <div
-                  className="w-2 h-2 bg-[#7f91a4] rounded-full animate-bounce"
-                  style={{ animationDelay: '0.2s' }}
-                />
-                <div
-                  className="w-2 h-2 bg-[#7f91a4] rounded-full animate-bounce"
-                  style={{ animationDelay: '0.4s' }}
-                />
-              </div>
-            </div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
 
-        <div className="bg-[#17212b] p-4 shrink-0">
-          <div className="flex items-end gap-2 bg-[#242f3d] rounded-xl px-4 py-2">
+              {msg.sender === 'bot' && msg.ad?.match && msg.ad.tracking_url && (
+                <div className="mt-3 pt-3 border-t border-black/10">
+                  <a
+                    href={msg.ad.tracking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center w-full bg-[#3390ec] hover:bg-[#2b7fd4] transition-colors rounded-lg py-2.5 text-sm font-medium text-white"
+                  >
+                    {msg.ad.cta_label || "Batafsil ma'lumot"}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {isTyping && (
+          <div className="flex w-full justify-start">
+            <div className="bg-white border border-black/5 text-black/70 rounded-2xl rounded-bl-md px-4 py-3 flex gap-1 shadow-sm">
+              <div className="w-2 h-2 bg-black/30 rounded-full animate-bounce" />
+              <div
+                className="w-2 h-2 bg-black/30 rounded-full animate-bounce"
+                style={{ animationDelay: '0.15s' }}
+              />
+              <div
+                className="w-2 h-2 bg-black/30 rounded-full animate-bounce"
+                style={{ animationDelay: '0.3s' }}
+              />
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} className="h-px shrink-0" aria-hidden />
+      </div>
+
+      {/* Input — pinned bottom, does not grow the page */}
+      <div className="shrink-0 bg-white border-t border-black/10 px-4 py-3">
+        <div className="flex items-end gap-2 max-w-4xl mx-auto w-full">
+          <div className="flex-1 flex items-end gap-2 bg-[#f0f2f5] rounded-2xl px-3 py-1.5 border border-black/5 min-h-[44px]">
             <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder="Write a message..."
-              className="flex-1 bg-transparent text-white outline-none resize-none max-h-32 py-2 text-[15px] placeholder:text-[#7f91a4]"
+              onKeyDown={handleKeyDown}
+              placeholder="Message"
               rows={1}
-              style={{ minHeight: '40px' }}
+              className="flex-1 bg-transparent text-black outline-none resize-none overflow-y-auto text-[15px] leading-[22px] py-2 placeholder:text-black/40 max-h-[120px]"
+              style={{ minHeight: '22px' }}
             />
             <button
+              type="button"
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
-              className="p-2 text-[#5eb5f7] hover:bg-white/5 rounded-full transition-colors disabled:opacity-50"
+              className="shrink-0 p-2 text-[#3390ec] hover:bg-black/5 rounded-full transition-colors disabled:opacity-40 mb-0.5"
+              aria-label="Send"
             >
-              <Send className="w-6 h-6" />
+              <Send className="w-5 h-5" />
             </button>
           </div>
-          <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+        </div>
+
+        <div className="flex gap-2 mt-2 overflow-x-auto pb-0.5 max-w-4xl mx-auto w-full scrollbar-hide">
+          {quickPrompts.map((q) => (
             <button
-              onClick={() => setInput('iPhone 15 narxlari qancha?')}
-              className="shrink-0 text-xs px-3 py-1.5 bg-[#242f3d] text-white/80 rounded-full hover:bg-[#2b5278] transition-colors border border-white/5"
+              key={q}
+              type="button"
+              onClick={() => setInput(q)}
+              className="shrink-0 text-xs px-3 py-1.5 bg-white text-black/70 rounded-full hover:bg-[#3390ec]/10 hover:text-[#3390ec] transition-colors border border-black/10"
             >
-              iPhone 15 narxlari?
+              {q}
             </button>
-            <button
-              onClick={() => setInput('Kofe ichmoqchi edim')}
-              className="shrink-0 text-xs px-3 py-1.5 bg-[#242f3d] text-white/80 rounded-full hover:bg-[#2b5278] transition-colors border border-white/5"
-            >
-              Kofe ichmoqchi edim
-            </button>
-            <button
-              onClick={() => setInput('Sayohatga qayerga borsam boladi?')}
-              className="shrink-0 text-xs px-3 py-1.5 bg-[#242f3d] text-white/80 rounded-full hover:bg-[#2b5278] transition-colors border border-white/5"
-            >
-              Sayohat qilish
-            </button>
-            <button
-              onClick={() => setInput('Noutbuklar qanaqa?')}
-              className="shrink-0 text-xs px-3 py-1.5 bg-[#242f3d] text-white/80 rounded-full hover:bg-[#2b5278] transition-colors border border-white/5"
-            >
-              Noutbuk so'rash
-            </button>
-          </div>
+          ))}
         </div>
       </div>
     </div>
