@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { MousePointerClick, Eye, Wallet, Zap } from 'lucide-react';
 import { api } from '../../lib/api';
 import {
@@ -25,8 +25,7 @@ export default function BusinessAnalytics() {
         const camps = await api.getCampaigns();
         setCampaigns(camps);
         if (camps.length > 0) {
-          // You could also check for a query param here if you want to link from Campaigns page
-          setSelectedCampaignId(camps[0].id || camps[0]._id);
+          setSelectedCampaignId(camps[0]._id || camps[0].id);
         } else {
           setLoading(false);
         }
@@ -57,13 +56,13 @@ export default function BusinessAnalytics() {
   if (!loading && !campaigns.length) {
     return (
       <div className="size-full bg-white flex flex-col items-center justify-center min-h-[500px]">
-        <h2 className="text-2xl font-bold text-black mb-2">No Campaigns Found</h2>
-        <p className="text-black/60 mb-6">Create your first campaign to see analytics</p>
+        <h2 className="text-2xl font-bold text-black mb-2">Kampaniyalar topilmadi</h2>
+        <p className="text-black/60 mb-6">Analitikani ko‘rish uchun birinchi kampaniyangizni yarating</p>
         <button 
           onClick={() => navigate('/business/campaigns')}
           className="px-6 py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors"
         >
-          Create Campaign
+          Kampaniya yaratish
         </button>
       </div>
     );
@@ -74,16 +73,15 @@ export default function BusinessAnalytics() {
   // Format daily stats for charts
   
   const dailyClicksData = daily_stats.map((d: any) => ({
-    day: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    day: new Date(d.date).toLocaleDateString('uz-UZ', { weekday: 'short' }),
     clicks: d.clicks,
     impressions: d.impressions,
   }));
 
-  // Simulate some conversion data based on real clicks if actual conversion stats aren't heavily populated by backend /dashboard/:id yet
-  const clicksPerActionData = [
-    { action: 'Product View', clicks: totals.clicks, conversions: Math.floor(totals.clicks * 0.4) },
-    { action: 'Add to Cart', clicks: Math.floor(totals.clicks * 0.4), conversions: Math.floor(totals.clicks * 0.15) },
-    { action: 'Purchase', clicks: Math.floor(totals.clicks * 0.15), conversions: Math.floor(totals.clicks * 0.05) },
+  const funnelData = [
+    { stage: 'Ko‘rinishlar', count: totals.impressions ?? 0, rate: '—' },
+    { stage: 'Bosishlar', count: totals.clicks ?? 0, rate: totals.ctr ?? '0%' },
+    { stage: 'Konversiyalar', count: totals.conversions ?? 0, rate: totals.conversion_rate ?? '0%' },
   ];
 
   return (
@@ -93,17 +91,28 @@ export default function BusinessAnalytics() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-black mb-2">
-              {campaign.name ? `${campaign.name} Analytics` : 'Business Analytics'}
+              {campaign.name ? `${campaign.name} — analitika` : 'Biznes analitika'}
             </h1>
-            <p className="text-black/60">Track click performance and advertising costs</p>
+            <p className="text-black/60">Bosishlar samaradorligi va reklama xarajatlarini kuzating</p>
           </div>
-          <div className="flex gap-3 items-center">
-            {campaigns.length > 1 && (
-              <span className="text-sm text-black/40 font-medium">Showing {campaign.name}</span>
+          <div className="flex flex-wrap gap-3 items-center">
+            {campaigns.length > 0 && (
+              <Select value={selectedCampaignId} onValueChange={setSelectedCampaignId}>
+                <SelectTrigger className="w-[min(100%,280px)] bg-white border-black/20">
+                  <SelectValue placeholder="Kampaniyani tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  {campaigns.map((c) => {
+                    const id = c._id || c.id;
+                    return (
+                      <SelectItem key={id} value={id}>
+                        {c.name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
             )}
-            <button className="px-6 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors">
-              Export
-            </button>
           </div>
         </div>
 
@@ -123,10 +132,10 @@ export default function BusinessAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <MousePointerClick className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">7 Days</span>
+                  <span className="text-sm text-black/60">7 kun</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Clicks</p>
-                <p className="text-3xl font-bold text-black">{totals.clicks.toLocaleString()}</p>
+                <p className="text-black/60 text-sm mb-1">Jami bosishlar</p>
+                <p className="text-3xl font-bold text-black">{totals.clicks.toLocaleString('uz-UZ')}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -134,10 +143,10 @@ export default function BusinessAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <Eye className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">7 Days</span>
+                  <span className="text-sm text-black/60">7 kun</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Impressions</p>
-                <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString()}</p>
+                <p className="text-black/60 text-sm mb-1">Jami ko‘rinishlar</p>
+                <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString('uz-UZ')}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -145,10 +154,10 @@ export default function BusinessAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <Wallet className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">Lifetime</span>
+                  <span className="text-sm text-black/60">Umumiy</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Campaign Budget</p>
-                <p className="text-3xl font-bold text-black">{(campaign.budget || 0).toLocaleString()} UZS</p>
+                <p className="text-black/60 text-sm mb-1">Kampaniya byudjeti</p>
+                <p className="text-3xl font-bold text-black">{(campaign.budget || 0).toLocaleString('uz-UZ')} so‘m</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -156,9 +165,9 @@ export default function BusinessAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <Zap className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="text-sm text-black/60">Average</span>
+                  <span className="text-sm text-black/60">O‘rtacha</span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Click Through Rate</p>
+                <p className="text-black/60 text-sm mb-1">Bosishlar foizi (CTR)</p>
                 <p className="text-3xl font-bold text-black">{totals.ctr}</p>
               </div>
             </div>
@@ -169,8 +178,8 @@ export default function BusinessAnalytics() {
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-black mb-1">Daily Click Performance</h2>
-                    <p className="text-black/60">Number of users who clicked your links each day</p>
+                    <h2 className="text-2xl font-bold text-black mb-1">Kunlik bosishlar</h2>
+                    <p className="text-black/60">Har kuni havolalaringizni bosgan foydalanuvchilar soni</p>
                   </div>
                 </div>
                 <div className="h-96">
@@ -193,12 +202,12 @@ export default function BusinessAnalytics() {
                           borderRadius: '8px',
                           color: '#000000'
                         }}
-                        formatter={(value) => [`${value}`, 'Count']}
+                        formatter={(value) => [`${value}`, 'Soni']}
                       />
                       <Bar
                         dataKey="clicks"
                         fill="#0000FF"
-                        name="Clicks"
+                        name="Bosishlar"
                         radius={[4, 4, 0, 0]}
                       />
                     </BarChart>
@@ -210,32 +219,27 @@ export default function BusinessAnalytics() {
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-black mb-1">Funnel Conversions</h2>
-                    <p className="text-black/60">Performance breakdown by action type</p>
+                    <h2 className="text-2xl font-bold text-black mb-1">Konversiya voronkasi</h2>
+                    <p className="text-black/60">Ko‘rinish → bosish → konversiya (jonli ma’lumotlar)</p>
                   </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b-2 border-black/10">
-                        <th className="text-left py-4 px-4 text-black font-semibold">Action Type</th>
-                        <th className="text-right py-4 px-4 text-black font-semibold">Total Events</th>
-                        <th className="text-right py-4 px-4 text-black font-semibold">Conversions</th>
-                        <th className="text-right py-4 px-4 text-black font-semibold">Conversion Rate</th>
+                        <th className="text-left py-4 px-4 text-black font-semibold">Bosqich</th>
+                        <th className="text-right py-4 px-4 text-black font-semibold">Soni</th>
+                        <th className="text-right py-4 px-4 text-black font-semibold">Foiz</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {clicksPerActionData.map((action) => {
-                        const conversionRate = action.clicks > 0 ? ((action.conversions / action.clicks) * 100).toFixed(1) : "0.0";
-                        return (
-                          <tr key={action.action} className="border-b border-black/5 hover:bg-black/5 transition-colors">
-                            <td className="py-4 px-4 text-black font-medium">{action.action}</td>
-                            <td className="py-4 px-4 text-right text-black">{action.clicks.toLocaleString()}</td>
-                            <td className="py-4 px-4 text-right text-black">{action.conversions}</td>
-                            <td className="py-4 px-4 text-right text-black">{conversionRate}%</td>
+                      {funnelData.map((row) => (
+                          <tr key={row.stage} className="border-b border-black/5 hover:bg-black/5 transition-colors">
+                            <td className="py-4 px-4 text-black font-medium">{row.stage}</td>
+                            <td className="py-4 px-4 text-right text-black">{row.count.toLocaleString('uz-UZ')}</td>
+                            <td className="py-4 px-4 text-right text-black">{row.rate}</td>
                           </tr>
-                        );
-                      })}
+                        ))}
                     </tbody>
                   </table>
                 </div>

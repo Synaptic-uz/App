@@ -56,30 +56,33 @@ export default function AgentAnalytics() {
   if (!loading && !agents.length) {
     return (
       <div className="size-full bg-white flex flex-col items-center justify-center min-h-[500px]">
-        <h2 className="text-2xl font-bold text-black mb-2">No Agents Found</h2>
-        <p className="text-black/60 mb-6">Register your first AI agent to see analytics</p>
+        <h2 className="text-2xl font-bold text-black mb-2">Agentlar topilmadi</h2>
+        <p className="text-black/60 mb-6">Analitikani ko‘rish uchun birinchi AI agentingizni ro‘yxatdan o‘tkazing</p>
         <button 
           onClick={() => navigate('/agent/manage')}
           className="px-6 py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors"
         >
-          Register Agent
+          Agent ro‘yxatdan o‘tkazish
         </button>
       </div>
     );
   }
 
-  const { totals, daily_stats = [], agent } = dashboard || { totals: { clicks: 0, impressions: 0, ctr: '0%' }, daily_stats: [], agent: {} };
+  const { totals, daily_stats = [], agent } = dashboard || {
+    totals: { clicks: 0, impressions: 0, revenue_earned: 0, ctr: '0%' },
+    daily_stats: [],
+    agent: {},
+  };
 
-  // Calculate synthetic revenue for the agent based on clicks if backend doesn't populate `revenue_earned` yet
-  const simulatedRevenue = totals.clicks * 250; // 250 UZS per click assumption
+  const revenueEarned = totals.revenue_earned ?? agent.revenue_earned ?? 0;
 
-  const revenueData = daily_stats.map((d: any) => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
-    revenue: d.clicks * 250,
+  const clicksData = daily_stats.map((d: any) => ({
+    date: new Date(d.date).toLocaleDateString('uz-UZ', { weekday: 'short' }),
+    clicks: d.clicks,
   }));
 
   const visitorsData = daily_stats.map((d: any) => ({
-    date: new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    date: new Date(d.date).toLocaleDateString('uz-UZ', { weekday: 'short' }),
     visitors: d.impressions,
   }));
 
@@ -90,17 +93,25 @@ export default function AgentAnalytics() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-4xl font-bold text-black mb-2">
-              {agent.username ? `${agent.username} Analytics` : 'Agent Analytics'}
+              {agent.username ? `${agent.username} — analitika` : 'Agent analitika'}
             </h1>
-            <p className="text-black/60">Monitor your AI agent's monetization and traffic</p>
+            <p className="text-black/60">AI agentingiz monetizatsiyasi va trafikini kuzating</p>
           </div>
-          <div className="flex gap-3 items-center">
-            {agents.length > 1 && (
-              <span className="text-sm text-black/40 font-medium">Showing {agent.username}</span>
+          <div className="flex flex-wrap gap-3 items-center">
+            {agents.length > 0 && (
+              <Select value={selectedAgentId} onValueChange={setSelectedAgentId}>
+                <SelectTrigger className="w-[min(100%,280px)] bg-white border-black/20">
+                  <SelectValue placeholder="Agentni tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map((a) => (
+                    <SelectItem key={a.username} value={a.username}>
+                      {a.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
-            <button className="px-6 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors">
-              Download Data
-            </button>
           </div>
         </div>
 
@@ -120,12 +131,9 @@ export default function AgentAnalytics() {
                   <div className="p-3 bg-[#0000FF]/10 rounded-lg">
                     <DollarSign className="w-6 h-6 text-[#0000FF]" />
                   </div>
-                  <span className="flex items-center text-sm text-[#0000FF] font-medium">
-                    +14.5% <ArrowUpRight className="w-4 h-4 ml-1" />
-                  </span>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Revenue Earned</p>
-                <p className="text-3xl font-bold text-black">{simulatedRevenue.toLocaleString()} UZS</p>
+                <p className="text-black/60 text-sm mb-1">Jami daromad</p>
+                <p className="text-3xl font-bold text-black">{revenueEarned.toLocaleString('uz-UZ')} so‘m</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -134,8 +142,8 @@ export default function AgentAnalytics() {
                     <Users className="w-6 h-6 text-[#0000FF]" />
                   </div>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Impressions</p>
-                <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString()}</p>
+                <p className="text-black/60 text-sm mb-1">Jami ko‘rinishlar</p>
+                <p className="text-3xl font-bold text-black">{totals.impressions.toLocaleString('uz-UZ')}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -144,8 +152,8 @@ export default function AgentAnalytics() {
                     <MousePointerClick className="w-6 h-6 text-[#0000FF]" />
                   </div>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Total Clicks</p>
-                <p className="text-3xl font-bold text-black">{totals.clicks.toLocaleString()}</p>
+                <p className="text-black/60 text-sm mb-1">Jami bosishlar</p>
+                <p className="text-3xl font-bold text-black">{totals.clicks.toLocaleString('uz-UZ')}</p>
               </div>
 
               <div className="bg-white border-2 border-black/10 rounded-xl p-6">
@@ -154,7 +162,7 @@ export default function AgentAnalytics() {
                     <ArrowUpRight className="w-6 h-6 text-[#0000FF]" />
                   </div>
                 </div>
-                <p className="text-black/60 text-sm mb-1">Click Through Rate</p>
+                <p className="text-black/60 text-sm mb-1">Bosishlar foizi (CTR)</p>
                 <p className="text-3xl font-bold text-black">{totals.ctr}</p>
               </div>
             </div>
@@ -164,14 +172,14 @@ export default function AgentAnalytics() {
               {/* Revenue Area Chart */}
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-black mb-1">Revenue Overview</h2>
-                  <p className="text-black/60">Estimated revenue based on clicks</p>
+                  <h2 className="text-2xl font-bold text-black mb-1">Kunlik bosishlar</h2>
+                  <p className="text-black/60">Ushbu agentga bog‘langan bosishlar (oxirgi 7 kun)</p>
                 </div>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData}>
+                    <AreaChart data={clicksData}>
                       <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id="colorClicks" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#0000FF" stopOpacity={0.3} />
                           <stop offset="95%" stopColor="#0000FF" stopOpacity={0} />
                         </linearGradient>
@@ -202,11 +210,11 @@ export default function AgentAnalytics() {
                       />
                       <Area 
                         type="monotone" 
-                        dataKey="revenue" 
+                        dataKey="clicks" 
                         stroke="#0000FF" 
                         strokeWidth={3}
                         fillOpacity={1} 
-                        fill="url(#colorRevenue)" 
+                        fill="url(#colorClicks)" 
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -216,8 +224,8 @@ export default function AgentAnalytics() {
               {/* Visitors Line Chart */}
               <div className="bg-white border-2 border-black/10 rounded-xl p-8">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-black mb-1">Total Impressions</h2>
-                  <p className="text-black/60">Number of users who saw the ads</p>
+                  <h2 className="text-2xl font-bold text-black mb-1">Jami ko‘rinishlar</h2>
+                  <p className="text-black/60">Reklamalarni ko‘rgan foydalanuvchilar soni</p>
                 </div>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">

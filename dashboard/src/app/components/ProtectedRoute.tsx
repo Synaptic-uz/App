@@ -13,7 +13,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   if (isLoading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center text-black/60">
-        Loading...
+        Yuklanmoqda...
       </div>
     );
   }

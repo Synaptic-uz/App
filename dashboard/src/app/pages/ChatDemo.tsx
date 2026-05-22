@@ -29,6 +29,14 @@ function maskVisibleUrls(text: string) {
 const FALLBACK_ANSWER =
   "Savolingiz bo'yicha yordam bera olaman. Biroz batafsil yozsangiz, aniqroq javob beraman.";
 
+function getDemoApiKey(): string {
+  return (
+    import.meta.env.VITE_DEMO_API_KEY ||
+    localStorage.getItem('synaptic_demo_api_key') ||
+    ''
+  );
+}
+
 function buildBotMessage(
   answer: string,
   sponsored?: { suggestion: string; tracking_url?: string; cta_label?: string }
@@ -39,7 +47,7 @@ function buildBotMessage(
   }
   const label = sponsored.cta_label || 'Batafsil';
   return {
-    text: `${cleanAnswer}\n\n\n[SPONSORED]: ${sponsored.suggestion}`,
+    text: `${cleanAnswer}\n\n\n[REKLAMA]: ${sponsored.suggestion}`,
     ad: {
       match: true,
       suggestion: sponsored.suggestion,
@@ -111,8 +119,10 @@ export default function ChatDemo() {
       }
 
       let sponsored: { suggestion: string; tracking_url?: string; cta_label?: string } | undefined;
+      const demoApiKey = getDemoApiKey();
       try {
-        const synaptic = await api.sendResult(userMsg.text, 'sk-synaptic-demo');
+        if (!demoApiKey) throw new Error('No demo API key');
+        const synaptic = await api.sendResult(userMsg.text, demoApiKey);
         const hasValidLink =
           typeof synaptic?.tracking_url === 'string' &&
           synaptic.tracking_url.includes('/t/') &&
@@ -171,8 +181,10 @@ export default function ChatDemo() {
           <Bot className="w-5 h-5 text-white" />
         </div>
         <div className="min-w-0">
-          <h2 className="font-semibold text-base text-black leading-tight">Synaptic Demo Bot</h2>
-          <p className="text-black/45 text-sm">{isTyping ? 'typing…' : 'online'}</p>
+          <h2 className="font-semibold text-base text-black leading-tight">Synaptic demo bot</h2>
+          <p className="text-black/45 text-sm">
+            {isTyping ? 'yozmoqda…' : getDemoApiKey() ? 'onlayn · reklamalar yoqilgan' : 'onlayn · reklama uchun agent ro‘yxatdan o‘tkazing'}
+          </p>
         </div>
       </div>
 
@@ -244,7 +256,7 @@ export default function ChatDemo() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message"
+              placeholder="Xabar"
               rows={1}
               className="flex-1 bg-transparent text-black outline-none resize-none overflow-y-auto text-[15px] leading-[22px] py-2 placeholder:text-black/40 max-h-[120px]"
               style={{ minHeight: '22px' }}
@@ -254,7 +266,7 @@ export default function ChatDemo() {
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
               className="shrink-0 p-2 text-[#3390ec] hover:bg-black/5 rounded-full transition-colors disabled:opacity-40 mb-0.5"
-              aria-label="Send"
+              aria-label="Yuborish"
             >
               <Send className="w-5 h-5" />
             </button>

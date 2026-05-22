@@ -8,15 +8,15 @@ export default function Layout() {
   const { user, logout, isAuthenticated } = useAuth();
 
   const allNavItems = [
-    { name: 'Home', path: '/', icon: LayoutDashboard, roles: ['any'] },
-    { name: 'Campaigns', path: '/business/campaigns', icon: Briefcase, roles: ['business'] },
-    { name: 'Business Analytics', path: '/business/analytics', icon: Target, roles: ['business'] },
-    { name: 'Agents', path: '/agent/manage', icon: Bot, roles: ['agent'] },
-    { name: 'Agent Analytics', path: '/agent/analytics', icon: Users, roles: ['agent'] },
-    { name: 'Chat Demo', path: '/demo', icon: Bot, roles: ['any'] },
+    { name: 'Bosh sahifa', path: '/', icon: LayoutDashboard, roles: ['any'] },
+    { name: 'Kampaniyalar', path: '/business/campaigns', icon: Briefcase, roles: ['business'] },
+    { name: 'Biznes analitika', path: '/business/analytics', icon: Target, roles: ['business'] },
+    { name: 'Agentlar', path: '/agent/manage', icon: Bot, roles: ['agent'] },
+    { name: 'Agent analitika', path: '/agent/analytics', icon: Users, roles: ['agent'] },
+    { name: 'Suhbat demo', path: '/demo', icon: Bot, roles: ['any'] },
   ];
 
-  const navItems = allNavItems.filter(item => 
+  const navItems = allNavItems.filter(item =>
     item.roles.includes('any') || (user && item.roles.includes(user.role))
   );
 
@@ -27,14 +27,13 @@ export default function Layout() {
 
   return (
     <div className="h-screen bg-white flex flex-col font-sans overflow-hidden">
-      {/* Header */}
       <header className="border-b-2 border-black/10 bg-white">
         <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link to="/" className="text-2xl font-bold text-black hover:opacity-80">
               Synaptic AI
             </Link>
-            
+
             <nav className="flex items-center gap-2">
               {navItems.map((item) => (
                 <Link
@@ -59,7 +58,7 @@ export default function Layout() {
                 {user?.role === 'agent' && (
                   <Link to="/agent/manage">
                     <button className="px-4 py-2 bg-black/5 text-black hover:bg-black/10 transition-colors rounded-lg text-sm font-medium">
-                      Register Agent
+                      Agent ro‘yxatdan o‘tkazish
                     </button>
                   </Link>
                 )}
@@ -67,16 +66,17 @@ export default function Layout() {
                   <Link to="/business/campaigns">
                     <button className="px-4 py-2 bg-[#0000FF] text-white hover:bg-[#0000CC] transition-colors rounded-lg text-sm font-medium flex items-center gap-2">
                       <Plus className="w-4 h-4" />
-                      New Campaign
+                      Yangi kampaniya
                     </button>
                   </Link>
                 )}
                 <div className="h-6 w-px bg-black/10 mx-2" />
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-medium text-black/60">{user?.email}</span>
-                  <button 
+                  <button
                     onClick={handleLogout}
                     className="p-2 text-black/40 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+                    aria-label="Chiqish"
                   >
                     <LogOut className="w-5 h-5" />
                   </button>
@@ -86,7 +86,7 @@ export default function Layout() {
               <Link to="/login">
                 <button className="px-6 py-2 bg-[#0000FF] text-white hover:bg-[#0000CC] transition-colors rounded-lg text-sm font-medium flex items-center gap-2">
                   <LogIn className="w-4 h-4" />
-                  Sign In
+                  Kirish
                 </button>
               </Link>
             )}
@@ -94,7 +94,6 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
         <Outlet />
       </main>

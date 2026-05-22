@@ -11,7 +11,7 @@ const getHeaders = () => {
 async function parseJsonResponse(res: Response) {
   const result = await res.json();
   if (!res.ok) {
-    throw new Error(result.error || 'Request failed');
+    throw new Error(result.error || 'So‘rov bajarilmadi');
   }
   return result;
 }
@@ -47,7 +47,7 @@ export const api = {
 
   getCategories: async () => {
     const res = await fetch(`${API_BASE}/categories`);
-    if (!res.ok) throw new Error('Failed to load categories');
+    if (!res.ok) throw new Error('Kategoriyalar yuklanmadi');
     return res.json();
   },
 

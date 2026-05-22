@@ -49,11 +49,11 @@ app.use(express.json());
 
 app.post('/api/auth/register', async (req, res) => {
   const { email, password, role } = req.body;
-  if (!email || !password || !role) return res.status(400).json({ error: 'Missing fields' });
+  if (!email || !password || !role) return res.status(400).json({ error: 'Barcha maydonlar to‘ldirilishi shart' });
 
   try {
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ error: 'Email already registered' });
+    if (existing) return res.status(400).json({ error: 'Bu email allaqachon ro‘yxatdan o‘tgan' });
 
     const hashedPassword = await hashPassword(password);
     const user = await User.create({ email, password: hashedPassword, role });
@@ -61,25 +61,25 @@ app.post('/api/auth/register', async (req, res) => {
     const token = generateToken(user);
     res.json({ token, user: { email: user.email, role: user.role } });
   } catch (error) {
-    res.status(500).json({ error: 'Registration failed' });
+    res.status(500).json({ error: 'Ro‘yxatdan o‘tish muvaffaqiyatsiz' });
   }
 });
 
 app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
+  if (!email || !password) return res.status(400).json({ error: 'Barcha maydonlar to‘ldirilishi shart' });
 
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!user) return res.status(400).json({ error: 'Email yoki parol noto‘g‘ri' });
 
     const isMatch = await comparePassword(password, user.password);
-    if (!isMatch) return res.status(400).json({ error: 'Invalid credentials' });
+    if (!isMatch) return res.status(400).json({ error: 'Email yoki parol noto‘g‘ri' });
 
     const token = generateToken(user);
     res.json({ token, user: { email: user.email, role: user.role } });
   } catch (error) {
-    res.status(500).json({ error: 'Login failed' });
+    res.status(500).json({ error: 'Kirish muvaffaqiyatsiz' });
   }
 });
 
@@ -226,16 +226,16 @@ app.post('/api/agents/register', authenticateToken, async (req, res) => {
   const { username, owner_email } = req.body;
 
   if (req.user.role !== 'agent') {
-    return res.status(403).json({ error: 'Only agent accounts can register API keys' });
+    return res.status(403).json({ error: 'Faqat agent hisoblari API kalit ro‘yxatdan o‘tkaza oladi' });
   }
 
   if (!username || !owner_email) {
-    return res.status(400).json({ error: 'Username and owner_email are required' });
+    return res.status(400).json({ error: 'Foydalanuvchi nomi va email talab qilinadi' });
   }
 
   try {
     const existing = await Agent.findOne({ username });
-    if (existing) return res.status(400).json({ error: 'Username already taken' });
+    if (existing) return res.status(400).json({ error: 'Bu foydalanuvchi nomi band' });
 
     const api_key = generateApiKey();
     const api_key_hash = hashApiKey(api_key);
@@ -248,12 +248,12 @@ app.post('/api/agents/register', authenticateToken, async (req, res) => {
     });
 
     res.json({
-      message: 'Agent registered. Store your API key — it will not be shown again.',
+      message: 'Agent ro‘yxatdan o‘tdi. API kalitini saqlang — keyin ko‘rsatilmaydi.',
       api_key
     });
   } catch (error) {
     console.error('Agent Registration Error:', error);
-    res.status(500).json({ error: 'Registration failed' });
+    res.status(500).json({ error: 'Ro‘yxatdan o‘tish muvaffaqiyatsiz' });
   }
 });
 
@@ -268,7 +268,7 @@ app.get('/api/agents', authenticateToken, async (req, res) => {
       api_key_hash: undefined,
     })));
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch agents' });
+    res.status(500).json({ error: 'Agentlar yuklanmadi' });
   }
 });
 
@@ -276,11 +276,11 @@ app.get('/api/agents/:username/stats', authenticateToken, async (req, res) => {
   const { username } = req.params;
   try {
     const agent = await Agent.findOne({ username }).lean();
-    if (!agent) return res.status(404).json({ error: 'Agent not found' });
+    if (!agent) return res.status(404).json({ error: 'Agent topilmadi' });
 
     // Enforce ownership
     if (agent.owner_id && agent.owner_id.toString() !== req.user.id) {
-      return res.status(403).json({ error: 'Unauthorized access to this agent' });
+      return res.status(403).json({ error: 'Ushbu agentga kirish huquqi yo‘q' });
     }
 
     const [events, dailyStats] = await Promise.all([
@@ -310,11 +310,16 @@ app.get('/api/agents/:username/stats', authenticateToken, async (req, res) => {
 
     res.json({
       agent: { ...agent, api_key_hash: undefined },
-      totals: { impressions, clicks, ctr: impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) + '%' : '0%' },
+      totals: {
+        impressions,
+        clicks,
+        revenue_earned: agent.revenue_earned || 0,
+        ctr: impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) + '%' : '0%',
+      },
       daily_stats: Object.values(formattedDaily),
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch agent stats' });
+    res.status(500).json({ error: 'Agent statistikasi yuklanmadi' });
   }
 });
 
@@ -359,7 +364,7 @@ app.post('/api/conversion', async (req, res) => {
 
   try {
     const campaign = await Campaign.findById(campaign_id).select('cpa_percentage cpa_rate').lean();
-    if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+    if (!campaign) return res.status(404).json({ error: 'Kampaniya topilmadi' });
 
     const cpaAmount = conversion_value ? (conversion_value * campaign.cpa_percentage) / 100 : campaign.cpa_rate;
 
@@ -416,11 +421,11 @@ app.get('/api/dashboard/:campaignId', authenticateToken, async (req, res) => {
   const { campaignId } = req.params;
   try {
     const campaign = await Campaign.findById(campaignId).lean();
-    if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+    if (!campaign) return res.status(404).json({ error: 'Kampaniya topilmadi' });
 
     // Enforce ownership
     if (campaign.owner_id && campaign.owner_id.toString() !== req.user.id) {
-      return res.status(403).json({ error: 'Unauthorized access to this campaign' });
+      return res.status(403).json({ error: 'Ushbu kampaniyaga kirish huquqi yo‘q' });
     }
 
     const [events, dailyStats] = await Promise.all([
@@ -464,7 +469,7 @@ app.get('/api/dashboard/:campaignId', authenticateToken, async (req, res) => {
       daily_stats: Object.values(formattedDaily),
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    res.status(500).json({ error: 'Analitika yuklanmadi' });
   }
 });
 
@@ -480,13 +485,13 @@ app.get('/api/campaigns', authenticateToken, async (req, res) => {
     const campaigns = await Campaign.find(query).select('-embedding').sort({ createdAt: -1 }).lean();
     res.json(campaigns);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch campaigns' });
+    res.status(500).json({ error: 'Kampaniyalar yuklanmadi' });
   }
 });
 
 app.post('/api/campaigns', authenticateToken, async (req, res) => {
   if (req.user.role !== 'business') {
-    return res.status(403).json({ error: 'Only business accounts can create campaigns' });
+    return res.status(403).json({ error: 'Faqat biznes hisoblari kampaniya yaratishi mumkin' });
   }
 
   const {
@@ -496,16 +501,16 @@ app.post('/api/campaigns', authenticateToken, async (req, res) => {
   const tracking_code = nanoid(10);
 
   if (!name || !category || !brand_url) {
-    return res.status(400).json({ error: 'Name, category, and brand URL are required' });
+    return res.status(400).json({ error: 'Nom, kategoriya va brend havolasi talab qilinadi' });
   }
 
   if (category === 'other' && !custom_category?.trim()) {
-    return res.status(400).json({ error: 'Please describe your category when using Other' });
+    return res.status(400).json({ error: '«Boshqa» tanlaganda kategoriya nomini yozing' });
   }
 
   const kwList = Array.isArray(keywords) ? keywords.filter(Boolean) : [];
   if (kwList.length === 0) {
-    return res.status(400).json({ error: 'At least one keyword is required for matching' });
+    return res.status(400).json({ error: 'Kamida bitta kalit so‘z kerak' });
   }
 
   const sub = subcategory || defaultSubcategory(category);
@@ -534,14 +539,14 @@ app.post('/api/campaigns', authenticateToken, async (req, res) => {
     loadCampaignCache();
     res.json({ id: tracking_code, _id: campaign._id });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create campaign' });
+    res.status(500).json({ error: 'Kampaniya yaratib bo‘lmadi' });
   }
 });
 
 app.put('/api/campaigns/:id', authenticateToken, async (req, res) => {
   try {
     const campaign = await Campaign.findOne({ _id: req.params.id, owner_id: req.user.id });
-    if (!campaign) return res.status(404).json({ error: 'Campaign not found or unauthorized' });
+    if (!campaign) return res.status(404).json({ error: 'Kampaniya topilmadi yoki ruxsat yo‘q' });
     
     const fields = ['name', 'category', 'subcategory', 'custom_category', 'tagline', 'description', 'keywords', 'niche_keywords'];
     for (const f of fields) {
@@ -555,19 +560,19 @@ app.put('/api/campaigns/:id', authenticateToken, async (req, res) => {
     loadCampaignCache();
     res.json(campaign);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to update campaign' });
+    res.status(500).json({ error: 'Kampaniya yangilanmadi' });
   }
 });
 
 app.delete('/api/campaigns/:id', authenticateToken, async (req, res) => {
   try {
     const result = await Campaign.deleteOne({ _id: req.params.id, owner_id: req.user.id });
-    if (result.deletedCount === 0) return res.status(404).json({ error: 'Campaign not found or unauthorized' });
+    if (result.deletedCount === 0) return res.status(404).json({ error: 'Kampaniya topilmadi yoki ruxsat yo‘q' });
     
     loadCampaignCache();
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete campaign' });
+    res.status(500).json({ error: 'Kampaniya o‘chirilmadi' });
   }
 });
 

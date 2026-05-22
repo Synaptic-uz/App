@@ -25,11 +25,29 @@ const emptyForm = {
   budget: '',
 };
 
+function campaignToForm(camp: Record<string, unknown>) {
+  return {
+    name: String(camp.name ?? ''),
+    category: String(camp.category ?? ''),
+    subcategory: String(camp.subcategory ?? ''),
+    custom_category: String(camp.custom_category ?? ''),
+    brand_url: String(camp.brand_url ?? ''),
+    link_text: String(camp.link_text ?? ''),
+    tagline: String(camp.tagline ?? ''),
+    description: String(camp.description ?? ''),
+    keywords: Array.isArray(camp.keywords) ? (camp.keywords as string[]).join(', ') : '',
+    niche_keywords: Array.isArray(camp.niche_keywords) ? (camp.niche_keywords as string[]).join(', ') : '',
+    budget: camp.budget != null ? String(camp.budget) : '',
+  };
+}
+
 export default function Campaigns() {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>(FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -74,14 +92,40 @@ export default function Campaigns() {
   const isOther = form.category === 'other';
 
   async function handleDelete(camp: { _id: string; name: string }) {
-    if (!window.confirm(`Delete campaign "${camp.name}"?`)) return;
+    if (!window.confirm(`"${camp.name}" kampaniyasini o‘chirasizmi?`)) return;
     setError('');
     try {
       await api.deleteCampaign(camp._id);
       await loadCampaigns();
     } catch (err: any) {
-      setError(err.message || 'Failed to delete campaign');
+      setError(err.message || 'Kampaniyani o‘chirib bo‘lmadi');
     }
+  }
+
+  function buildPayload() {
+    return {
+      name: form.name,
+      category: form.category,
+      subcategory: form.subcategory,
+      custom_category: isOther ? form.custom_category.trim() : '',
+      tagline: form.tagline,
+      description: form.description,
+      keywords: form.keywords
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean),
+      niche_keywords: form.niche_keywords
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean),
+    };
+  }
+
+  function openEdit(camp: Record<string, unknown>) {
+    setEditingId(String(camp._id));
+    setForm(campaignToForm(camp));
+    setError('');
+    setEditDialogOpen(true);
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -91,29 +135,35 @@ export default function Campaigns() {
 
     try {
       await api.createCampaign({
-        name: form.name,
-        category: form.category,
-        subcategory: form.subcategory,
-        custom_category: isOther ? form.custom_category.trim() : '',
+        ...buildPayload(),
         brand_url: form.brand_url,
         link_text: form.link_text || form.name,
-        tagline: form.tagline,
-        description: form.description,
-        keywords: form.keywords
-          .split(',')
-          .map((k) => k.trim())
-          .filter(Boolean),
-        niche_keywords: form.niche_keywords
-          .split(',')
-          .map((k) => k.trim())
-          .filter(Boolean),
         budget: Number(form.budget) || 0,
       });
       setForm(emptyForm);
       setDialogOpen(false);
       await loadCampaigns();
     } catch (err: any) {
-      setError(err.message || 'Failed to create campaign');
+      setError(err.message || 'Kampaniya yaratib bo‘lmadi');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleUpdate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingId) return;
+    setError('');
+    setSubmitting(true);
+
+    try {
+      await api.updateCampaign(editingId, buildPayload());
+      setForm(emptyForm);
+      setEditingId(null);
+      setEditDialogOpen(false);
+      await loadCampaigns();
+    } catch (err: any) {
+      setError(err.message || 'Kampaniyani yangilab bo‘lmadi');
     } finally {
       setSubmitting(false);
     }
@@ -124,19 +174,19 @@ export default function Campaigns() {
       <div className="max-w-7xl mx-auto p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-black mb-2">Campaigns</h1>
-            <p className="text-black/60">Create campaigns and set keywords users might type in chat.</p>
+            <h1 className="text-4xl font-bold text-black mb-2">Kampaniyalar</h1>
+            <p className="text-black/60">Kampaniyalar yarating va chatda foydalanuvchi yozishi mumkin bo‘lgan kalit so‘zlarni belgilang.</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <button className="px-6 py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors flex items-center gap-2">
                 <Plus className="w-5 h-5" />
-                New Campaign
+                Yangi kampaniya
               </button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Campaign</DialogTitle>
+                <DialogTitle>Yangi kampaniya</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4 mt-4">
                 {error && (
@@ -145,7 +195,7 @@ export default function Campaigns() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Campaign Name *</label>
+                  <label className="block text-sm font-medium text-black mb-1">Kampaniya nomi *</label>
                   <input
                     required
                     value={form.name}
@@ -156,14 +206,14 @@ export default function Campaigns() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">Category *</label>
+                    <label className="block text-sm font-medium text-black mb-1">Kategoriya *</label>
                     <select
                       required
                       value={form.category}
                       onChange={(e) => onCategoryChange(e.target.value)}
                       className="w-full border border-black/20 rounded-lg px-3 py-2 bg-white"
                     >
-                      <option value="">Select…</option>
+                      <option value="">Tanlang…</option>
                       {categories.map((c) => (
                         <option key={c.id} value={c.id}>
                           {c.label}
@@ -172,7 +222,7 @@ export default function Campaigns() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">Subcategory *</label>
+                    <label className="block text-sm font-medium text-black mb-1">Subkategoriya *</label>
                     <select
                       required
                       value={form.subcategory}
@@ -180,7 +230,7 @@ export default function Campaigns() {
                       disabled={!form.category}
                       className="w-full border border-black/20 rounded-lg px-3 py-2 bg-white disabled:opacity-50"
                     >
-                      <option value="">Select…</option>
+                      <option value="">Tanlang…</option>
                       {subcategoryOptions.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.label}
@@ -191,18 +241,18 @@ export default function Campaigns() {
                 </div>
                 {isOther && (
                   <div>
-                    <label className="block text-sm font-medium text-black mb-1">Your category name *</label>
+                    <label className="block text-sm font-medium text-black mb-1">Kategoriya nomingiz *</label>
                     <input
                       required
                       value={form.custom_category}
                       onChange={(e) => setForm({ ...form, custom_category: e.target.value })}
                       className="w-full border border-black/20 rounded-lg px-3 py-2"
-                      placeholder="University"
+                      placeholder="Universitet"
                     />
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Tagline *</label>
+                  <label className="block text-sm font-medium text-black mb-1">Shior *</label>
                   <input
                     required
                     value={form.tagline}
@@ -212,7 +262,7 @@ export default function Campaigns() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Brand URL *</label>
+                  <label className="block text-sm font-medium text-black mb-1">Brend havolasi *</label>
                   <input
                     required
                     type="url"
@@ -223,7 +273,7 @@ export default function Campaigns() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Description</label>
+                  <label className="block text-sm font-medium text-black mb-1">Tavsif</label>
                   <textarea
                     value={form.description}
                     onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -232,7 +282,7 @@ export default function Campaigns() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Keywords *</label>
+                  <label className="block text-sm font-medium text-black mb-1">Kalit so‘zlar *</label>
                   <input
                     required
                     value={form.keywords}
@@ -240,10 +290,10 @@ export default function Campaigns() {
                     className="w-full border border-black/20 rounded-lg px-3 py-2"
                     placeholder="universitet, abituriyent, qabul"
                   />
-                  <p className="text-xs text-black/50 mt-1">Comma-separated words users might say in chat.</p>
+                  <p className="text-xs text-black/50 mt-1">Vergul bilan ajratilgan so‘zlar — foydalanuvchi chatda yozishi mumkin.</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Niche keywords (optional)</label>
+                  <label className="block text-sm font-medium text-black mb-1">Niche kalit so‘zlar (ixtiyoriy)</label>
                   <input
                     value={form.niche_keywords}
                     onChange={(e) => setForm({ ...form, niche_keywords: e.target.value })}
@@ -251,14 +301,14 @@ export default function Campaigns() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-black mb-1">Budget (UZS) *</label>
+                  <label className="block text-sm font-medium text-black mb-1">Byudjet (UZS) *</label>
                   <input
                     required
                     type="number"
                     value={form.budget}
                     onChange={(e) => setForm({ ...form, budget: e.target.value })}
                     className="w-full border border-black/20 rounded-lg px-3 py-2"
-                    placeholder="Enter total budget (UZS)"
+                    placeholder="Umumiy byudjet (UZS)"
                   />
                 </div>
                 <button
@@ -266,14 +316,130 @@ export default function Campaigns() {
                   disabled={submitting}
                   className="w-full py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50"
                 >
-                  {submitting ? 'Creating...' : 'Create Campaign'}
+                  {submitting ? 'Yaratilmoqda...' : 'Kampaniya yaratish'}
                 </button>
               </form>
             </DialogContent>
           </Dialog>
         </div>
 
-        {error && !dialogOpen && (
+        <Dialog open={editDialogOpen} onOpenChange={(open) => { setEditDialogOpen(open); if (!open) { setEditingId(null); setError(''); } }}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Kampaniyani tahrirlash</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUpdate} className="space-y-4 mt-4">
+              {error && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
+                  {error}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">Kampaniya nomi *</label>
+                <input
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="w-full border border-black/20 rounded-lg px-3 py-2"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">Category *</label>
+                  <select
+                    required
+                    value={form.category}
+                    onChange={(e) => onCategoryChange(e.target.value)}
+                    className="w-full border border-black/20 rounded-lg px-3 py-2 bg-white"
+                  >
+                    <option value="">Tanlang…</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">Subcategory *</label>
+                  <select
+                    required
+                    value={form.subcategory}
+                    onChange={(e) => setForm({ ...form, subcategory: e.target.value })}
+                    disabled={!form.category}
+                    className="w-full border border-black/20 rounded-lg px-3 py-2 bg-white disabled:opacity-50"
+                  >
+                    <option value="">Tanlang…</option>
+                    {subcategoryOptions.map((s) => (
+                      <option key={s.id} value={s.id}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {isOther && (
+                <div>
+                  <label className="block text-sm font-medium text-black mb-1">Your category name *</label>
+                  <input
+                    required
+                    value={form.custom_category}
+                    onChange={(e) => setForm({ ...form, custom_category: e.target.value })}
+                    className="w-full border border-black/20 rounded-lg px-3 py-2"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">Tagline *</label>
+                <input
+                  required
+                  value={form.tagline}
+                  onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+                  className="w-full border border-black/20 rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black/50 mb-1">Brend havolasi (faqat ko‘rish)</label>
+                <input
+                  disabled
+                  value={form.brand_url}
+                  className="w-full border border-black/20 rounded-lg px-3 py-2 bg-black/5"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">Description</label>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="w-full border border-black/20 rounded-lg px-3 py-2"
+                  rows={2}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">Keywords *</label>
+                <input
+                  required
+                  value={form.keywords}
+                  onChange={(e) => setForm({ ...form, keywords: e.target.value })}
+                  className="w-full border border-black/20 rounded-lg px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-1">Niche keywords (optional)</label>
+                <input
+                  value={form.niche_keywords}
+                  onChange={(e) => setForm({ ...form, niche_keywords: e.target.value })}
+                  className="w-full border border-black/20 rounded-lg px-3 py-2"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50"
+              >
+                {submitting ? 'Saqlanmoqda...' : 'O‘zgarishlarni saqlash'}
+              </button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        {error && !dialogOpen && !editDialogOpen && (
           <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
             {error}
           </div>
@@ -290,10 +456,10 @@ export default function Campaigns() {
             <table className="w-full text-left">
               <thead className="bg-black/5 border-b-2 border-black/10">
                 <tr>
-                  <th className="p-4 font-semibold text-black">Name</th>
-                  <th className="p-4 font-semibold text-black">Category</th>
-                  <th className="p-4 font-semibold text-black text-right">Budget</th>
-                  <th className="p-4 font-semibold text-black text-center">Actions</th>
+                  <th className="p-4 font-semibold text-black">Nomi</th>
+                  <th className="p-4 font-semibold text-black">Kategoriya</th>
+                  <th className="p-4 font-semibold text-black text-right">Byudjet</th>
+                  <th className="p-4 font-semibold text-black text-center">Amallar</th>
                 </tr>
               </thead>
               <tbody>
@@ -318,7 +484,7 @@ export default function Campaigns() {
                             ))}
                             {camp.keywords.length > 4 && (
                               <span className="text-[10px] text-black/40 px-1 py-0.5 font-normal">
-                                +{camp.keywords.length - 4} more
+                                +{camp.keywords.length - 4} yana
                               </span>
                             )}
                           </div>
@@ -330,17 +496,22 @@ export default function Campaigns() {
                           {subLabel ? ` / ${subLabel}` : ''}
                         </span>
                       </td>
-                      <td className="p-4 text-right text-black">{(camp.budget / 1000).toLocaleString()}K UZS</td>
+                      <td className="p-4 text-right text-black">{(camp.budget / 1000).toLocaleString('uz-UZ')} ming so‘m</td>
                       <td className="p-4 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="p-2 text-black/60 hover:text-[#0000FF] hover:bg-[#0000FF]/10 rounded-lg transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => openEdit(camp)}
+                            className="p-2 text-black/60 hover:text-[#0000FF] hover:bg-[#0000FF]/10 rounded-lg transition-colors"
+                            aria-label={`${camp.name} ni tahrirlash`}
+                          >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(camp)}
                             className="p-2 text-black/60 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                            aria-label={`Delete ${camp.name}`}
+                            aria-label={`${camp.name} ni o‘chirish`}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -352,7 +523,7 @@ export default function Campaigns() {
                 {campaigns.length === 0 && (
                   <tr>
                     <td colSpan={4} className="p-8 text-center text-black/60">
-                      No campaigns found. Create one to get started!
+                      Kampaniyalar topilmadi. Boshlash uchun birinchi kampaniyangizni yarating!
                     </td>
                   </tr>
                 )}
