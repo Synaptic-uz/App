@@ -12,10 +12,13 @@ import {
   Session,
   User,
   incrementCampaignImpression,
+  chargeCampaignClick,
+  campaignHasBudgetRemaining,
+  sumCampaignBudgets,
   bootstrapRankingStats,
 } from './db.js';
 import { bulkLoadCtr, recordClick, clearServingState } from './adRanking.js';
-import { enrichResponse, loadCampaignCache } from './enrichment.js';
+import { enrichResponse, loadCampaignCache, invalidateCampaignCache } from './enrichment.js';
 import { nanoid } from 'nanoid';
 import { embedText } from './embeddings.js';
 import { findBestCampaign } from './campaignMatcher.js';
@@ -158,11 +161,11 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
   if (!prompt) return res.json({ match: false });
 
   try {
-    const activeCampaigns = await Campaign.find({
+    const activeCampaigns = (await Campaign.find({
       active: { $in: [1, true] },
     })
-      .select('+embedding name tracking_code brand_url link_text keywords niche_keywords custom_category subcategory category tagline description')
-      .lean();
+      .select('+embedding name tracking_code brand_url link_text keywords niche_keywords custom_category subcategory category tagline description budget spent cpc_rate')
+      .lean()).filter(campaignHasBudgetRemaining);
 
     const matchResult = await findBestCampaign(prompt, activeCampaigns, {
       servingContext: { agentId: agent.username },
@@ -193,7 +196,7 @@ app.post('/authorized/send_result', agentAuth, async (req, res) => {
         user_prompt: prompt.substring(0, 500),
       }).catch(() => {});
 
-      incrementCampaignImpression(bestCampaign._id, bestCampaign.cpc_rate || 0).catch(() => {});
+      incrementCampaignImpression(bestCampaign._id).catch(() => {});
       Agent.updateOne({ _id: agent._id }, { $inc: { total_impressions: 1 } }).catch(() => {});
 
       return res.json({
@@ -310,7 +313,12 @@ app.get('/api/agents/:username/stats', authenticateToken, async (req, res) => {
 
     res.json({
       agent: { ...agent, api_key_hash: undefined },
-      totals: { impressions, clicks, ctr: impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) + '%' : '0%' },
+      totals: {
+        impressions,
+        clicks,
+        revenue_earned: agent.revenue_earned || 0,
+        ctr: impressions > 0 ? ((clicks / impressions) * 100).toFixed(2) + '%' : '0%',
+      },
       daily_stats: Object.values(formattedDaily),
     });
   } catch (error) {
@@ -337,11 +345,9 @@ app.get('/t/:code', async (req, res) => {
       }).catch(() => {});
 
       recordClick(campaign._id);
-      Campaign.updateOne({ _id: campaign._id }, { $inc: { stats_clicks: 1 } }).catch(() => {});
-
-      if (agentId) {
-        Agent.updateOne({ username: agentId }, { $inc: { total_clicks: 1 } }).catch(() => {});
-      }
+      chargeCampaignClick(campaign._id, campaign.cpc_rate || 0, agentId || null).catch((err) => {
+        console.error('Click charge failed:', err.message);
+      });
 
       return res.redirect(dest);
     }
@@ -454,7 +460,10 @@ app.get('/api/dashboard/:campaignId', authenticateToken, async (req, res) => {
       campaign: {
         id: campaign._id, name: campaign.name, category: campaign.category, brand_url: campaign.brand_url,
         tracking_code: campaign.tracking_code, cpc_rate: campaign.cpc_rate, cpa_percentage: campaign.cpa_percentage,
-        budget: campaign.budget, spent: campaign.spent, budget_remaining: campaign.budget - campaign.spent, source: campaign.source,
+        budget: campaign.budget,
+        spent: campaign.spent,
+        budget_remaining: campaign.budget,
+        source: campaign.source,
       },
       totals: {
         impressions: totalImpressions, clicks: totalClicks, conversions: totalConversions,
@@ -478,7 +487,8 @@ app.get('/api/campaigns', authenticateToken, async (req, res) => {
   try {
     const query = req.user.role === 'business' ? { owner_id: req.user.id } : {};
     const campaigns = await Campaign.find(query).select('-embedding').sort({ createdAt: -1 }).lean();
-    res.json(campaigns);
+    const main_balance = req.user.role === 'business' ? sumCampaignBudgets(campaigns) : undefined;
+    res.json({ campaigns, main_balance });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch campaigns' });
   }
@@ -509,6 +519,7 @@ app.post('/api/campaigns', authenticateToken, async (req, res) => {
   }
 
   const sub = subcategory || defaultSubcategory(category);
+  const budgetAmount = Math.max(0, Number(budget) || 0);
 
   try {
     const profile = {
@@ -526,15 +537,56 @@ app.post('/api/campaigns', authenticateToken, async (req, res) => {
       description: description || '', keywords: kwList,
       niche_keywords: niche_keywords || [],
       cpc_rate: cpc_rate || 0, cpa_percentage: cpa_percentage || 0,
-      tone: tone || 'informative', budget: budget || 0, source: 'partner',
+      tone: tone || 'informative', budget: budgetAmount, spent: 0, source: 'partner',
       owner_id: req.user.id,
       active: 1,
     });
 
-    loadCampaignCache();
-    res.json({ id: tracking_code, _id: campaign._id });
+    invalidateCampaignCache();
+    await loadCampaignCache();
+    const allCampaigns = await Campaign.find({ owner_id: req.user.id }).select('budget').lean();
+    res.json({
+      id: tracking_code,
+      _id: campaign._id,
+      budget: budgetAmount,
+      main_balance: sumCampaignBudgets(allCampaigns),
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to create campaign' });
+  }
+});
+
+app.get('/api/account', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('email role balance').lean();
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    let main_balance = 0;
+    let campaigns_summary = null;
+    if (user.role === 'business') {
+      const camps = await Campaign.find({ owner_id: req.user.id }).select('budget spent name').lean();
+      main_balance = sumCampaignBudgets(camps);
+      const total_used = camps.reduce((s, c) => s + (c.spent || 0), 0);
+      campaigns_summary = {
+        count: camps.length,
+        main_balance,
+        total_used,
+        campaigns: camps.map((c) => ({
+          name: c.name,
+          balance: c.budget || 0,
+          used: c.spent || 0,
+        })),
+      };
+    }
+
+    res.json({
+      email: user.email,
+      role: user.role,
+      main_balance,
+      campaigns_summary,
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to load account' });
   }
 });
 
@@ -552,7 +604,8 @@ app.put('/api/campaigns/:id', authenticateToken, async (req, res) => {
     }
     await campaign.save();
 
-    loadCampaignCache();
+    invalidateCampaignCache();
+    await loadCampaignCache();
     res.json(campaign);
   } catch (error) {
     res.status(500).json({ error: 'Failed to update campaign' });
@@ -564,7 +617,8 @@ app.delete('/api/campaigns/:id', authenticateToken, async (req, res) => {
     const result = await Campaign.deleteOne({ _id: req.params.id, owner_id: req.user.id });
     if (result.deletedCount === 0) return res.status(404).json({ error: 'Campaign not found or unauthorized' });
     
-    loadCampaignCache();
+    invalidateCampaignCache();
+    await loadCampaignCache();
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete campaign' });
@@ -587,6 +641,7 @@ app.get('/api/sessions', async (req, res) => {
 app.post('/api/cache/clear', async (req, res) => {
   analyticsCache = { data: null, timestamp: 0 };
   clearServingState();
+  invalidateCampaignCache();
   await loadCampaignCache();
   await bootstrapRankingStats(bulkLoadCtr);
   res.json({ success: true });

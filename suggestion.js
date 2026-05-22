@@ -19,16 +19,16 @@ export function buildSuggestion(campaign) {
   const name = campaign.name || 'this brand';
   const tagline = campaign.tagline || 'they have some great offers';
 
-  return `Oh, if you're interested in ${category}, you might wanna check out ${name} — ${tagline}.`;
+  return `Agar ${category} qiziqtirsa, ${name} ni ko'rib chiqing — ${tagline}.`;
 }
 
 export function buildCtaLabel(campaign) {
-  return campaign.link_text || campaign.name || 'View offer';
+  return campaign.link_text || campaign.name || 'Batafsil';
 }
 
 export function formatSponsoredAppend(suggestion, ctaLabel) {
   const label = ctaLabel ? ` → ${ctaLabel}` : '';
-  return `\n\n\n[SPONSORED]: ${suggestion}${label}`;
+  return `\n\n\n[REKLAMA]: ${suggestion}${label}`;
 }
 
 export function buildTrackingUrl(req, trackingCode, agentUsername) {

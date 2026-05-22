@@ -6,128 +6,151 @@ export const OTHER_CATEGORY_ID = 'other';
 export const OTHER_SUBCATEGORY_ID = 'custom';
 
 export const TAXONOMY = {
-  shopping_retail: {
-    label: 'Shopping & Retail',
+  electronics: {
+    label: 'Elektronika va texnika',
     subcategories: {
-      electronics: {
-        label: 'Electronics & tech',
+      general: {
+        label: 'Telefon, noutbuk va umumiy texnika',
         signals: [
           'noutbuk', 'laptop', 'telefon', 'phone', 'iphone', 'samsung', 'smartphone',
           'planshet', 'tablet', 'kompyuter', 'elektronika', 'texnika', 'gadjet', 'narxi',
+        ],
+      },
+      gaming: {
+        label: 'Gaming va aksessuarlar',
+        signals: [
           'gaming pc', 'gaming noutbuk', 'gaming laptop', 'gaming', 'gamer', 'rtx', 'gpu',
           'playstation', 'ps5', 'xbox', 'steam', 'oyin', "o'yin", 'klaviatura', 'naushnik',
+        ],
+      },
+      appliances: {
+        label: 'Maishiy texnika va TV',
+        signals: [
           'televizor', 'tv', 'muzlatgich', 'kir yuvish', 'konditsioner', 'mikroto\'lqin',
-          'microwave', 'maishiy texnika',
+          'microwave', 'appliance', 'maishiy texnika',
         ],
       },
-      fashion: {
-        label: 'Fashion & apparel',
-        signals: [
-          'kiyim', 'moda', 'fashion', 'dress', 'style', 'kechak',
-          'oyoq kiyim', 'krossovka', 'sneaker', 'poyabzal', 'shoes',
-          'sumka', 'bag', 'aksessuar', 'soat', 'watch', 'zargarlik',
-        ],
-      },
-      beauty: {
-        label: 'Beauty & personal care',
-        signals: [
-          'kosmetika', 'parfyum', 'perfume', 'skincare', 'soch', 'hair', 'beauty', 'go\'zallik',
-          'dorixona', 'pharmacy', 'dori', 'vitamin', 'apteka', 'health',
-        ],
-      },
-      home: {
-        label: 'Home & furniture',
-        signals: [
-          'mebel', 'furniture', 'divan', 'stol', 'interior', 'uy jihozlari',
-          'remont', 'qurilish', 'bo\'yoq', 'plitka', 'diy', 'construction',
-        ],
-      },
-      kids: {
-        label: 'Kids & baby',
-        signals: ['bolalar', 'kids', 'o\'yinchoq', 'toy', 'chaqaloq', 'baby', 'maktab'],
-      },
-      sports: {
-        label: 'Sports & fitness',
-        signals: ['sport', 'fitness', 'zal', 'gym', 'to\'p', 'futbol', 'trekking'],
-      },
-      marketplace: {
-        label: 'Marketplace & retail',
+    },
+  },
+  marketplace: {
+    label: 'Marketpleys va chakana savdo',
+    subcategories: {
+      general: {
+        label: 'Ko\'p turdagi onlayn do\'kon',
         signals: ['marketplace', 'internet do\'kon', 'onlayn do\'kon', 'xarid', 'buyurtma', 'sotib ol'],
       },
     },
   },
-  food_lifestyle: {
-    label: 'Food & Lifestyle',
+  food: {
+    label: 'Ovqat va yetkazib berish',
     subcategories: {
       delivery: {
-        label: 'Food delivery',
+        label: 'Ovqat yetkazib berish',
         signals: ['yetkazib', 'delivery', 'ovqat', 'pizza', 'sushi', 'taom', 'restaurant', 'buyurtma'],
       },
       groceries: {
-        label: 'Groceries & supermarket',
+        label: 'Supermarket mahsulotlari',
         signals: ['supermarket', 'groceries', 'mahsulot', 'oziq ovqat', 'non', 'sut', 'go\'sht'],
-      },
-      coffee: {
-        label: 'Coffee & cafe',
-        signals: ['qahva', 'kofe', 'coffee', 'espresso', 'cappuccino', 'latte', 'cafe'],
-      },
-      pets: {
-        label: 'Pets',
-        signals: ['hayvon', 'pet', 'mushuk', 'it', 'dog', 'cat', 'oziq hayvon'],
       },
     },
   },
-  finance_services: {
-    label: 'Finance & Services',
+  fashion: {
+    label: 'Moda va kiyim',
+    subcategories: {
+      general: { label: 'Kiyim-kechak', signals: ['kiyim', 'moda', 'fashion', 'dress', 'style', 'kechak'] },
+      shoes: { label: 'Oyoq kiyim', signals: ['oyoq kiyim', 'krossovka', 'sneaker', 'poyabzal', 'shoes'] },
+      accessories: { label: 'Sumka va aksessuarlar', signals: ['sumka', 'bag', 'aksessuar', 'soat', 'watch', 'zargarlik'] },
+    },
+  },
+  beauty: {
+    label: 'Go\'zallik va parvarish',
+    subcategories: {
+      general: {
+        label: 'Kosmetika va parvarish',
+        signals: ['kosmetika', 'parfyum', 'perfume', 'skincare', 'soch', 'hair', 'beauty', 'go\'zallik'],
+      },
+      pharmacy: {
+        label: 'Dorixona va sog\'liq mahsulotlari',
+        signals: ['dorixona', 'pharmacy', 'dori', 'vitamin', 'apteka', 'health'],
+      },
+    },
+  },
+  finance: {
+    label: 'Moliya va to\'lovlar',
     subcategories: {
       installment: {
-        label: 'Buy now, pay later',
+        label: 'Muddatli to\'lov',
         signals: ['muddatli tolov', 'kredit', "bo'lib to'lash", 'installment', '0%'],
       },
       banking: {
-        label: 'Banking & cards',
+        label: 'Bank va kartalar',
         signals: ['bank', 'karta', 'card', 'pul o\'tkazma', 'deposit', 'loan'],
       },
       insurance: {
-        label: 'Insurance',
+        label: 'Sug\'urta',
         signals: ['sug\'urta', 'insurance', 'policy', 'kasko'],
-      },
-      general_services: {
-        label: 'General B2B & consumer services',
-        signals: ['xizmat', 'service', 'consulting', 'agency', 'subscription', 'saas'],
-      },
-      cloud: {
-        label: 'Cloud & developer tools',
-        signals: ['cloud', 'hosting', 'server', 'developer', 'api', 'coding'],
       },
     },
   },
-  travel_transport: {
-    label: 'Travel & Transport',
+  travel: {
+    label: 'Sayohat va turizm',
     subcategories: {
-      trips_hotels: {
-        label: 'Trips & hotels',
+      general: {
+        label: 'Sayohat va mehmonxonalar',
         signals: ['sayohat', 'turizm', "ta'til", 'travel', 'mehmonxona', 'hotel', 'chipta', 'vacation'],
       },
       flights: {
-        label: 'Flights & tickets',
+        label: 'Aviachiptalar',
         signals: ['flight', 'samolyot', 'avia', 'bilet', 'airport'],
       },
-      taxi: {
-        label: 'Taxi & ride-hailing',
-        signals: ['taxi', 'yandex go', 'mashina chaqirish', 'ride'],
-      },
+    },
+  },
+  transport: {
+    label: 'Transport',
+    subcategories: {
+      taxi: { label: 'Taksi', signals: ['taxi', 'yandex go', 'mashina chaqirish', 'ride'] },
       auto: {
-        label: 'Cars & auto parts',
+        label: 'Avtomobil va ehtiyot qismlar',
         signals: ['mashina', 'avto', 'car', 'avtomobil', 'zapchast', 'auto', 'haydovchi'],
       },
     },
   },
-  education_media: {
-    label: 'Education & Media',
+  home: {
+    label: 'Uy va mebel',
+    subcategories: {
+      furniture: {
+        label: 'Mebel va dekor',
+        signals: ['mebel', 'furniture', 'divan', 'stol', 'interior', 'uy jihozlari'],
+      },
+      renovation: {
+        label: 'Ta\'mirlash va DIY',
+        signals: ['remont', 'qurilish', 'bo\'yoq', 'plitka', 'diy', 'construction'],
+      },
+    },
+  },
+  kids: {
+    label: 'Bolalar va chaqaloq',
+    subcategories: {
+      general: {
+        label: 'O\'yinchoq va bolalar mahsulotlari',
+        signals: ['bolalar', 'kids', 'o\'yinchoq', 'toy', 'chaqaloq', 'baby', 'maktab'],
+      },
+    },
+  },
+  sports: {
+    label: 'Sport va fitnes',
+    subcategories: {
+      general: {
+        label: 'Sport kiyim va jihozlar',
+        signals: ['sport', 'fitness', 'zal', 'gym', 'to\'p', 'futbol', 'trekking'],
+      },
+    },
+  },
+  education: {
+    label: 'Ta\'lim',
     subcategories: {
       university: {
-        label: 'Universities & admissions',
+        label: 'Universitet va qabul',
         signals: [
           'universitet', 'university', 'abituriyent', 'magistratura', 'bakalavr',
           'college', 'o\'qish', 'oqish', 'talim', 'ta\'lim', 'fakultet', 'grant',
@@ -135,32 +158,68 @@ export const TAXONOMY = {
         ],
       },
       courses: {
-        label: 'Courses & tutoring',
+        label: 'Kurslar va repetitor',
         signals: ['kurs', 'course', 'learn', 'tutor', 'online course', 'training'],
       },
       books: {
-        label: 'Books & stationery',
+        label: 'Kitoblar va kanselyariya',
         signals: ['kitob', 'book', 'daftar', 'stationery', 'qalam'],
       },
+    },
+  },
+  coffee: {
+    label: 'Kofe va kafe',
+    subcategories: {
+      general: {
+        label: 'Kofe va ichimliklar',
+        signals: ['qahva', 'kofe', 'coffee', 'espresso', 'cappuccino', 'latte', 'cafe'],
+      },
+    },
+  },
+  pets: {
+    label: 'Uy hayvonlari',
+    subcategories: {
+      general: {
+        label: 'Uy hayvonlari oziq-ovqati',
+        signals: ['hayvon', 'pet', 'mushuk', 'it', 'dog', 'cat', 'oziq hayvon'],
+      },
+    },
+  },
+  services: {
+    label: 'Xizmatlar va B2B',
+    subcategories: {
+      general: {
+        label: 'Umumiy xizmatlar',
+        signals: ['xizmat', 'service', 'consulting', 'agency', 'subscription', 'saas'],
+      },
+      cloud: {
+        label: 'Cloud va dasturchi vositalari',
+        signals: ['cloud', 'hosting', 'server', 'developer', 'api', 'coding'],
+      },
+    },
+  },
+  entertainment: {
+    label: 'Ko\'ngilochar va media',
+    subcategories: {
       streaming: {
-        label: 'Streaming & subscriptions',
+        label: 'Striming va obunalar',
         signals: ['streaming', 'film', 'movie', 'music', 'subscription', 'video'],
       },
       events: {
-        label: 'Events & tickets',
+        label: 'Tadbirlar va chiptalar',
         signals: ['bilet', 'ticket', 'konsert', 'concert', 'teatr', 'event'],
       },
     },
   },
   real_estate: {
-    label: 'Real Estate',
+    label: 'Ko\'chmas mulk',
     subcategories: {
       rent: {
-        label: 'Rent & lease',
+        label: 'Ijara',
         signals: ['ijara', 'rent', 'kvartira', 'apartment', 'uy ijarasi'],
       },
       buy: {
-        label: 'Buy property',
+        label: 'Mulk sotib olish',
         signals: ['sotiladi', 'uy sotib', 'real estate', 'property', 'dom'],
       },
     },
@@ -180,8 +239,8 @@ export function getCategoryOptions() {
 
   list.push({
     id: OTHER_CATEGORY_ID,
-    label: 'Other — not listed above',
-    subcategories: [{ id: OTHER_SUBCATEGORY_ID, label: 'Custom (describe your business)' }],
+    label: 'Boshqa — ro\'yxatda yo\'q',
+    subcategories: [{ id: OTHER_SUBCATEGORY_ID, label: 'O\'z kategoriyangizni yozing' }],
     allowCustomLabel: true,
   });
 

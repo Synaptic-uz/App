@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '../context/AuthContext';
+import { uz } from '../../lib/uz';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -13,7 +14,7 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
   if (isLoading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center text-black/60">
-        Loading...
+        {uz.common.loading}
       </div>
     );
   }
