@@ -1,0 +1,56 @@
+{
+  "dashboard": {
+    "welcome": "Welcome, {{name}}!",
+    "panel": "Dashboard",
+    "businessDesc": "Follow the steps below to start working in the advertising network.",
+    "agentDesc": "Connect your agent, track earnings, and test the API in the demo chat.",
+    "onboardingProgress": "Onboarding Progress",
+    "ready": "All ready",
+    "nextStep": "Next step",
+    "greatKeepGoing": "Great - keep going",
+    "manageCampaignsOrAnalytics": "Manage campaigns or view analytics.",
+    "monitorAgentsAndEarnings": "Monitor agents and earnings dashboard.",
+    "allSteps": "All steps",
+    "helpNeeded": "Need help?",
+    "checkFormat": "See ad format via demo chat.",
+    "steps": {
+      "campaign": {
+        "title": "Create Campaign",
+        "description": "AI analyzes your brand - keywords and products are auto-filled.",
+        "cta": "Manage campaigns",
+        "ctaFirst": "First campaign"
+      },
+      "analytics": {
+        "title": "Track Results",
+        "description": "CTR, clicks, and budget spent - over a 7-day period.",
+        "cta": "Open analytics"
+      },
+      "demo": {
+        "title": "Try in Demo Chat",
+        "description": "See how the ad looks when a user asks a question.",
+        "cta": "Demo chat"
+      },
+      "profile": {
+        "title": "Complete Profile",
+        "description": "Company name and contacts - AI selects relevant ads better.",
+        "cta": "Profile"
+      },
+      "agent": {
+        "title": "Connect Your Agent",
+        "description": "Get API key and integrate into Telegram or web bot.",
+        "cta": "Manage agents",
+        "ctaAdd": "Add agent"
+      },
+      "earnings": {
+        "title": "Track Earnings",
+        "description": "Clicks and agent share - in real-time.",
+        "cta": "Earnings dashboard"
+      },
+      "apiDemo": {
+        "title": "Test API in Demo Chat",
+        "description": "See response and ad format with sk-synaptic-demo key.",
+        "cta": "Demo chat"
+      }
+    }
+  }
+}

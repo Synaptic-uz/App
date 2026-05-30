@@ -1,0 +1,23 @@
+@layer base {
+	body {
+		@apply bg-[#F9FAFB] text-gray-900 font-sans;
+	}
+}
+
+@layer components {
+	.synaptic-card {
+		@apply bg-white border border-gray-200 rounded-xl shadow-sm p-6;
+	}
+	.synaptic-btn {
+		@apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-all;
+	}
+	.btn-primary {
+		@apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-semibold transition-all bg-blue-600 text-white hover:bg-blue-700;
+	}
+	.section-title {
+		@apply text-xl font-bold text-gray-900 mb-4;
+	}
+	.form-input {
+		@apply w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 outline-none;
+	}
+}

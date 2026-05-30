@@ -12,8 +12,9 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
 
   if (isLoading) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center text-black/60">
-        Yuklanmoqda...
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-[var(--color-bg)]">
+        <div className="h-10 w-10 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+        <p className="text-sm text-[var(--color-text-secondary)]">Yuklanmoqda…</p>
       </div>
     );
   }

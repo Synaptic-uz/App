@@ -1,0 +1,648 @@
+{
+        "language": "O'zbekcha",
+        "currency": "UZS",
+        "currencySymbol": "сўм",
+        "auth": {
+                "login": "Kirish",
+                "register": "Ro'yxatdan o'tish",
+                "logout": "Chiqish",
+                "email": "Email",
+                "password": "Parol",
+                "confirmPassword": "Parolni tasdiqlang",
+                "businessOwner": "Biznes egasi",
+                "agent": "Agent",
+                "role": "Rol",
+                "signUp": "Ro'yxatdan o'tish",
+                "signIn": "Kirish",
+                "alreadyAccount": "Allaqachon akkauntingiz bor?",
+                "noAccount": "Akkauntingiz yo'qmi?",
+                "forgotPassword": "Parolni unutdingizmi?",
+                "rememberMe": "Meni eslab qol",
+                "loginPageTitle": "Kirish - Synaptic AI",
+                "loginPageDesc": "Synaptic AI tizimiga kirish va o‘z reklamalaringizni boshqarish.",
+                "welcomeBack": "Synaptic AI ga xush kelibsiz",
+                "emailPlaceholder": "siz@kompaniya.uz",
+                "passwordPlaceholder": "••••••••",
+                "loginFailed": "Kirish muvaffaqiyatsiz",
+                "registerPageTitle": "Ro‘yxatdan o‘tish - Synaptic AI",
+                "registerPageDesc": "Synaptic AI ga qo‘shiling va AI agentlar orqali reklama berishni boshlang.",
+                "createAccount": "Hisob yaratish",
+                "joinFuture": "AI reklamasining kelajagiga qo‘shiling",
+                "roleBusiness": "Biznes",
+                "roleAgent": "AI agent",
+                "registerFailed": "Ro‘yxatdan o‘tish muvaffaqiyatsiz"
+        },
+        "navigation": {
+                "home": "Bosh sahifa",
+                "dashboard": "Boshqaruv paneli",
+                "campaigns": "Kampaniyalar",
+                "campaigns_plural": "Kampaniyalar",
+                "analytics": "Statistika",
+                "agents": "Agentlar",
+                "wallet": "Hamyon",
+                "profile": "Profil",
+                "settings": "Sozlamalar",
+                "chat": "Chat",
+                "demo": "Demo",
+                "help": "Yordam"
+        },
+        "campaigns": {
+                "title": "Kampaniyalar",
+                "create": "Yangi kampaniya",
+                "edit": "Kampaniyani tahrir qilish",
+                "delete": "Kampaniyani o'chirish",
+                "name": "Kampaniya nomi",
+                "category": "Kategoriya",
+                "subcategory": "Subkategoriya",
+                "customCategory": "Boshqa kategoriya",
+                "brandUrl": "Brend URL",
+                "linkText": "Havolaning matni",
+                "tagline": "Slogan",
+                "description": "Tavsif",
+                "keywords": "Kalit so'zlar",
+                "nicheKeywords": "Maxsus kalit so'zlar",
+                "offerings": "Mahsulotlar/Xizmatlar",
+                "cpcRate": "CPC narxi",
+                "tone": "Ton",
+                "status": "Holati",
+                "active": "Faol",
+                "inactive": "Nofaol",
+                "pause": "Pauzaga olish",
+                "resume": "Davom ettirish",
+                "createdAt": "Yaratilgan",
+                "updatedAt": "Yangilangan",
+                "noData": "Kampaniyalar yo'q",
+                "createFirst": "Birinchi kampaniyangizni yarating",
+                "successCreate": "Kampaniya muvaffaqiyatli yaratildi",
+                "successUpdate": "Kampaniya muvaffaqiyatli yangilandi",
+                "successDelete": "Kampaniya muvaffaqiyatli o'chirildi",
+                "errorCreate": "Kampaniyani yaratib bo'lmadi",
+                "errorUpdate": "Kampaniyani yangilab bo'lmadi",
+                "errorDelete": "Kampaniyani o'chirib bo'lmadi",
+                "errorLoad": "Kampaniyalar yuklanmadi",
+                "successCopyLink": "Tracking havolasi nusxalandi",
+                "successRefreshEmbedding": "Embedding muvaffaqiyatli yangilandi",
+                "errorRefreshEmbedding": "Embeddingni yangilab bo‘lmadi",
+                "confirmDelete": "\"{{name}}\" kampaniyasini o‘chirasizmi?",
+                "errorValidation": "Kamida bitta kalit so‘z yoki mahsulot/xizmat qo‘shing",
+                "successResume": "Kampaniya davom ettirildi",
+                "successPause": "Kampaniya pauzada",
+                "errorStatusUpdate": "Holat yangilanmadi",
+                "copyTrackingLink": "Tracking havolasini nusxalash",
+                "refreshEmbedding": "Embeddingni yangilash",
+                "listTitle": "Mavjud kampaniyalar",
+                "paused": "Pauzada",
+                "budget": "Byudjet",
+                "remaining": "Qoldi",
+                "cpc": "CPC",
+                "trackingCode": "Tracking kodi",
+                "form": {
+                        "basicInfo": "Asosiy ma'lumotlar",
+                        "keywordsHint": "Vergul bilan yoki mahsulotlardan avtomatik",
+                        "cpcHint": "Har bosish uchun",
+                        "ctaPlaceholder": "Batafsil ko‘rish",
+                        "creating": "Yaratilmoqda…",
+                        "saving": "Saqlanmoqda…",
+                        "errorInvalidUrl": "Avval to‘g‘ri brend havolasini kiriting (https://...)",
+                        "successResearch": "Maydonlar va {{count}} ta mahsulot/xizmat to‘ldirildi",
+                        "successResearchAll": "Barcha maydonlar AI tomonidan to‘ldirildi",
+                        "errorResearch": "AI tadqiqot muvaffaqiyatsiz",
+                        "aiTitle": "AI to‘liq avtoto‘ldirish",
+                        "aiDesc": "Havola kiritilganda barcha maydonlar avtomatik to‘ldiriladi. Qo‘lda yangilash uchun tugmani bosing.",
+                        "researchBrief": "Qisqa izoh (ixtiyoriy)",
+                        "researchBriefHint": "AI uchun qo‘shimcha kontekst",
+                        "researchBriefPlaceholder": "Masalan: Toshkentdagi onlayn kurslar",
+                        "runAi": "Qayta AI bilan to‘ldirish",
+                        "researching": "AI tahlil qilmoqda…",
+                        "updatingFields": "Maydonlar yangilanmoqda…"
+                },
+                "firstCampaign": "Birinchi kampaniyangiz",
+                "onboardingDesc": "Brend sayti va mahsulotlarni kiriting — AI kalit so‘zlar, shior va auditoriyani avtomatik to‘ldiradi.",
+                "editCampaign": "Kampaniyani tahrirlash",
+                "creatingNew": "Yangi kampaniya yaratilmoqda...",
+                "headerDesc": "«Yangi kampaniya» tugmasini bosing — AI maydonlarni to‘ldiradi. Tayyor bo‘lgach analitikadan natijani ko‘ring.",
+                "taMahsulot": "{{count}} ta mahsulot/xizmat",
+                "editNamed": "{{name}} ni tahrirlash",
+                "deleteNamed": "{{name}} ni o‘chirish",
+                "tones": {
+                        "informative": "Ma’lumotli",
+                        "promotional": "Reklama",
+                        "comparative": "Taqqoslovchi",
+                        "dealFocused": "Chegirma / aksiya"
+                }
+        },
+        "wallet": {
+                "title": "Hamyon",
+                "balance": "Balans",
+                "deposit": "To'ldirish",
+                "withdraw": "Yechib olish",
+                "transactions": "Tranzaksiyalar",
+                "amount": "Miqdor",
+                "date": "Sana",
+                "type": "Turi",
+                "status": "Holati",
+                "mockDeposit": "Test to'ldirish",
+                "mockDepositAmount": "50 000",
+                "deposit50k": "50 000 UZS to'ldirish",
+                "testDepositNote": "Test rejimi: Demo uchun simulyatsiya qilingan to'ldirish",
+                "successDeposit": "To'ldirish muvaffaqiyatli",
+                "errorDeposit": "To'ldirish muvaffaqiyatsiz",
+                "loadError": "Hamyon yuklanmadi",
+                "depositSuccess": "Balans to‘ldirildi",
+                "depositError": "To‘ldirish bajarilmadi",
+                "panelTitle": "Reklama hamyoni",
+                "walletLabel": "Hamyon",
+                "unallocated": "Ajratilmagan",
+                "inCampaigns": "Kampaniyalarda",
+                "unusedBudget": "Ishlatilmagan byudjet",
+                "spent": "Sarflangan",
+                "byClicks": "Bosishlar bo‘yicha",
+                "walletDesc": "Kampaniya yaratishda byudjet hamyondan avtomatik ajratiladi. Byudjet tugasa reklama to‘xtaydi.",
+                "testDepositLabel": "Test to‘ldirish (server: ALLOW_MOCK_DEPOSIT=1)",
+                "depositBtn": "To‘ldirish",
+                "uzs": "so‘m"
+        },
+        "profile": {
+                "title": "Profil",
+                "displayName": "Ko'rsatiladigan nom",
+                "companyName": "Kompaniya nomi",
+                "phone": "Telefon raqami",
+                "email": "Email",
+                "currentPassword": "Hozirgi parol",
+                "newPassword": "Yangi parol",
+                "confirmNewPassword": "Yangi parolni tasdiqlang",
+                "edit": "Profilni tahrir qilish",
+                "changePassword": "Parolni o'zgartirish",
+                "save": "Saqlash",
+                "cancel": "Bekor qilish",
+                "successUpdate": "Profil muvaffaqiyatli yangilandi",
+                "errorUpdate": "Profilni yangilab bo'lmadi",
+                "loadError": "Ma’lumot yuklanmadi",
+                "sessionsLoadError": "Sessiyalar yuklanmadi",
+                "saveSuccess": "Profil saqlandi",
+                "saveError": "Saqlab bo‘lmadi",
+                "passwordsMismatch": "Yangi parollar mos emas",
+                "passwordTooShort": "Yangi parol kamida 6 belgidan iborat bo‘lsin",
+                "passwordUpdateSuccess": "Parol yangilandi",
+                "passwordUpdateError": "Parol yangilanmadi",
+                "sessionRevokeSuccess": "Sessiya bekor qilindi",
+                "sessionRevokeError": "Bekor qilib bo‘lmadi",
+                "sessionsRevokeAllSuccess": "Boshqa qurilmalardagi sessiyalar bekor qilindi",
+                "pageTitle": "Profil — Synaptic",
+                "headerTitle": "Profil",
+                "headerDescBusiness": "Ism va kompaniya AI reklama mosligini yaxshilaydi. Saqlang — keyin kampaniya yarating.",
+                "headerDescAgent": "Ism va telefon kabinetda ko‘rinadi. API kalitlar “Agentlar” bo‘limida.",
+                "noName": "Ism kiritilmagan",
+                "campaigns": "Kampaniyalar",
+                "active": "Faol",
+                "agents": "Agentlar",
+                "clicks": "Bosishlar",
+                "goToCampaigns": "Kampaniyalarga o‘tish",
+                "goToAgents": "Agentlarga o‘tish",
+                "infoTab": "Ma’lumotlar",
+                "passwordTab": "Parol",
+                "sessionsTab": "Sessiyalar",
+                "saveSuccessDesc": "Profil saqlandi. Endi {{type}} qo‘shishingiz mumkin.",
+                "campaign": "kampaniya",
+                "agent": "agent",
+                "nameLabel": "Ism",
+                "nameHint": "Kabinetda ko‘rinadi",
+                "namePlaceholder": "Masalan: Dilyor",
+                "companyLabel": "Kompaniya",
+                "companyHint": "AI reklama matnida ishlatiladi",
+                "companyPlaceholder": "Masalan: Hamkorbank",
+                "phoneLabel": "Telefon",
+                "phoneHint": "Ixtiyoriy",
+                "saveBtn": "Saqlash",
+                "cancelBtn": "Bekor qilish",
+                "passwordNote": "Parolni o‘zgartirgach, boshqa qurilmalarda qayta kirishingiz kerak bo‘lishi mumkin.",
+                "currentPasswordLabel": "Joriy parol",
+                "newPasswordLabel": "Yangi parol",
+                "newPasswordHint": "Kamida 6 belgi",
+                "confirmPasswordLabel": "Tasdiqlash",
+                "updatePasswordBtn": "Parolni yangilash",
+                "sessionsNote": "Faol qurilmalar. Boshqa joylardan chiqish uchun barcha sessiyalarni bekor qiling.",
+                "loadingSessions": "Qurilmalar yuklanmoqda...",
+                "noOtherSessions": "Boshqa faol qurilmalar yo‘q — faqat joriy brauzer sessiyasi",
+                "currentSession": "(joriy)",
+                "unknownIp": "IP noma’lum",
+                "lastUsed": "oxirgi: {{date}}",
+                "revokeBtn": "Chiqarish",
+                "revokeAllBtn": "Boshqa barcha sessiyalarni bekor qilish",
+                "roleBusiness": "Biznes",
+                "roleAgent": "AI agent"
+        },
+        "analytics": {
+                "title": "Statistika",
+                "businessAnalytics": "Biznes statistikasi",
+                "agentAnalytics": "Agent statistikasi",
+                "impressions": "Koʻrinishlar",
+                "clicks": "Bosilmalar",
+                "conversions": "Konversiyalar",
+                "ctr": "CTR",
+                "conversionRate": "Konversiya darajasi",
+                "spent": "Sarflandi",
+                "revenue": "Daromad",
+                "period": "Davri",
+                "today": "Bugun",
+                "week": "Oxirgi 7 kun",
+                "month": "Oxirgi 30 kun",
+                "all": "Barcha vaqt",
+                "noDataDesc": "Analitikani ko‘rish uchun birinchi kampaniyangizni yarating.",
+                "campaignAnalytics": "{{name}} — analitika",
+                "description": "So‘nggi {{days}} kun: ko‘rinishlar, bosishlar, CTR va sarflangan byudjet.",
+                "selectCampaign": "Kampaniyani tanlang",
+                "hints": {
+                        "ctr": "Ko‘rinish → bosish",
+                        "cpc": "Har bosish uchun"
+                },
+                "budgetRemaining": "Byudjet qoldi",
+                "totalBudget": "Jami: {{amount}} so‘m",
+                "dailyActivity": "Kunlik faollik",
+                "dailyActivityDesc": "Bosishlar va ko‘rinishlar — {{days}} kun",
+                "funnel": "Konversiya voronkasi",
+                "funnelDesc": "Ko‘rinish → bosish → konversiya ({{days}} kun)",
+                "stage": "Bosqich",
+                "count": "Soni",
+                "percentage": "Foiz"
+        },
+        "agents": {
+                "title": "Agentlar",
+                "register": "Agentni ro'yxatdan o'tkazish",
+                "username": "Foydalanuvchi nomi",
+                "ownerEmail": "Egasi emaili",
+                "apiKey": "API kalit",
+                "stats": "Statistika",
+                "totalRequests": "Jami so'rovlar",
+                "lastSeen": "Oxirgi ko'rinish",
+                "active": "Faol",
+                "inactive": "Nofaol",
+                "successRegister": "Agent muvaffaqiyatli ro'yxatdan o'tkazildi",
+                "errorRegister": "Agentni ro'yxatdan o'tkazib bo'lmadi",
+                "headerTitle": "AI agentlar",
+                "headerDesc": "«Agent qo‘shish» — API kalit olasiz. Uni botingizga ulang, keyin demo chatda sinang.",
+                "registerBtn": "Agent ro‘yxatdan o‘tkazish",
+                "registerDialogTitle": "Yangi AI agent",
+                "registerSuccessDesc": "Agent muvaffaqiyatli ro‘yxatdan o‘tdi. API kalitini hozir nusxalang — keyin qayta ko‘rsatilmaydi.",
+                "copy": "Nusxalash",
+                "copied": "Nusxalandi!",
+                "ready": "Tayyor",
+                "usernameLabel": "Agent foydalanuvchi nomi *",
+                "usernameHint": "Kuzatuv havolalari va analitikada ishlatiladi",
+                "usernamePlaceholder": "mening-telegram-botim",
+                "ownerEmailLabel": "Egasi emaili",
+                "registering": "Ro‘yxatdan o‘tkazilmoqda…",
+                "createApiKey": "API kalit yaratish",
+                "noAgents": "Hali agentlar ro‘yxatdan o‘tmagan",
+                "registerFirst": "Birinchi agentni ro‘yxatdan o‘tkazing",
+                "lastActivity": "Oxirgi faollik: {{date}}",
+                "paused": "Pauzada",
+                "pause": "Pauza",
+                "resume": "Davom ettirish",
+                "delete": "O‘chirish",
+                "deleteConfirm": "\"{{username}}\" agentini o‘chirasizmi?",
+                "deleteSuccess": "Agent o‘chirildi",
+                "deleteError": "Agent o‘chirilmadi",
+                "statusActive": "Agent faollashtirildi",
+                "statusPaused": "Agent pauzada",
+                "statusError": "Holat yangilanmadi",
+                "agentId": "Agent ID",
+                "status": "Holat",
+                "actions": "Amallar",
+                "requests": "So‘rovlar",
+                "clicks": "Bosishlar",
+                "registerError": "Agent ro‘yxatdan o‘tkazib bo‘lmadi"
+        },
+        "chat": {
+                "title": "Chat Demo",
+                "message": "Xabar",
+                "send": "Yuborish",
+                "placeholder": "Xabarni yozing...",
+                "thinking": "Fikrlanyapti...",
+                "error": "Xato",
+                "retry": "Yana urinish",
+                "clear": "Tozalash",
+                "fallbackAnswer": "Savolingiz bo'yicha yordam bera olaman. Biroz batafsil yozsangiz, aniqroq javob beraman.",
+                "welcomeMessage": "**Assalomu alaykum!** Men oddiy AI yordamchiman — savolingizga javob beraman.\n\nAgar mavzu mos kelsa, pastda **tabiiy reklama** paydo bo‘ladi (xuddi Telegram botlardagi kabi). Quyidagi tayyor savollardan birini tanlang yoki o‘zingiz yozing.",
+                "moreInfo": "Batafsil",
+                "newChatStarted": "Yangi suhbat boshlandi",
+                "aiError": "AI javob vaqtincha ishlamadi — oddiy javob ko‘rsatilmoqda",
+                "pageTitle": "Demo — Synaptic AI chat",
+                "pageDesc": "Synaptic AI chat demo — tabiiy reklama va Markdown javoblar.",
+                "homeLink": "Bosh sahifa",
+                "sidebarTitle": "Demo suhbat",
+                "sidebarDesc": "AI javob + kontekst bo‘yicha reklama. Hamkorbank va boshqa kampaniyalar uchun sinab ko‘ring.",
+                "newChat": "Yangi suhbat",
+                "back": "Orqaga",
+                "writing": "Javob yozilmoqda…",
+                "demoSubtitle": "Demo · Markdown · nativ reklama",
+                "new": "Yangi",
+                "categories": {
+                        "finance": "Moliya",
+                        "tech": "Texnika",
+                        "food": "Ovqat",
+                        "fashion": "Moda",
+                        "bank": "Bank & kredit",
+                        "phones": "Telefonlar",
+                        "delivery": "Yetkazib berish"
+                },
+                "prompts": {
+                        "loan": "Hamkorbankdan kredit olish mumkinmi?",
+                        "installment": "Muddatli to‘lov bilan xarid qilish",
+                        "laptop": "Noutbuk sotib olmoqchiman",
+                        "iphone": "iPhone 15 narxlari qancha?",
+                        "pizza": "Toshkentda pizza yetkazib berish",
+                        "dinner": "Kechki ovqat buyurtma qilish",
+                        "clothing": "Kiyim-kechak qayerdan olsam bo‘ladi?",
+                        "sneakers": "Krossovka narxlari"
+                },
+                "inputPlaceholder": "Savolingizni yozing…"
+        },
+        "common": {
+                "save": "Saqlash",
+                "cancel": "Bekor qilish",
+                "delete": "O'chirish",
+                "edit": "Tahrir qilish",
+                "add": "Qo'shish",
+                "remove": "Olib tashlash",
+                "loading": "Yuklanmoqda...",
+                "error": "Xato",
+                "success": "Muvaffaqiyat",
+                "warning": "Ogohlantirish",
+                "yes": "Ha",
+                "no": "Yo'q",
+                "search": "Qidirish",
+                "filter": "Filterlash",
+                "sort": "Saralash",
+                "close": "Yopish",
+                "next": "Keyingi",
+                "previous": "Avvalgi",
+                "back": "Orqaga",
+                "submit": "Yuborish",
+                "copy": "Nusxalash",
+                "share": "Ulashish",
+                "download": "Yuklab olish",
+                "export": "Eksport qilish",
+                "import": "Import qilish",
+                "days": "kun",
+                "uzs": "so'm",
+                "thousandUzs": "ming so‘m",
+                "status": "Holat",
+                "actions": "Amallar",
+                "select": "Tanlang…",
+                "optional": "(ixtiyoriy)"
+        },
+        "errors": {
+                "required": "Ushbu maydon to'ldirilishi shart",
+                "invalidEmail": "Noto'g'ri email manzili",
+                "passwordTooShort": "Parol kamida 8 ta belgidan iborat bo'lishi kerak",
+                "passwordMismatch": "Parollar mos kelmadi",
+                "unauthorized": "Avtorizatsiya o'tkazilmagan",
+                "forbidden": "Taqiqlangan",
+                "notFound": "Topilmadi",
+                "serverError": "Server xatosi",
+                "networkError": "Tarmoq xatosi"
+        },
+        "dashboard": {
+                "welcome": "Xush kelibsiz, {{name}}!",
+                "panel": "Boshqaruv paneli",
+                "businessDesc": "Reklama tarmog'ida ishlashni boshlash uchun quyidagi bosqichlarni bajaring.",
+                "agentDesc": "Agentingizni ulang, daromadni kuzating va demo chatda API-ni sinab ko'ring.",
+                "onboardingProgress": "Onboarding holati",
+                "ready": "Hammasi tayyor",
+                "nextStep": "Keyingi qadam",
+                "greatKeepGoing": "Ajoyib - davom eting",
+                "manageCampaignsOrAnalytics": "Kampaniyalarni boshqaring yoki statistikani ko'ring.",
+                "monitorAgentsAndEarnings": "Agentlar va daromadlar panelini kuzating.",
+                "allSteps": "Barcha bosqichlar",
+                "helpNeeded": "Yordam kerakmi?",
+                "checkFormat": "Demo chat orqali reklama formatini ko'ring.",
+                "steps": {
+                        "campaign": {
+                                "title": "Kampaniya yaratish",
+                                "description": "AI brendingizni tahlil qiladi - kalit so'zlar va mahsulotlar avtomatik to'ldiriladi.",
+                                "cta": "Kampaniyalarni boshqarish",
+                                "ctaFirst": "Birinchi kampaniya"
+                        },
+                        "analytics": {
+                                "title": "Natijalarni kuzatish",
+                                "description": "CTR, bosilmalar va sarflangan byudjet - 7 kunlik davr uchun.",
+                                "cta": "Statistikani ochish"
+                        },
+                        "demo": {
+                                "title": "Demo chatda sinab ko'ring",
+                                "description": "Foydalanuvchi savol berganida reklama qanday ko'rinishini ko'ring.",
+                                "cta": "Demo chat"
+                        },
+                        "profile": {
+                                "title": "Profilni to'ldiring",
+                                "description": "Kompaniya nomi va kontaktlar - AI reklamalarni yaxshiroq tanlaydi.",
+                                "cta": "Profil"
+                        },
+                        "agent": {
+                                "title": "Agentingizni ulang",
+                                "description": "API kalitini oling va Telegram yoki veb-botga integratsiya qiling.",
+                                "cta": "Agentlarni boshqarish",
+                                "ctaAdd": "Agent qo'shish"
+                        },
+                        "earnings": {
+                                "title": "Daromadni kuzatish",
+                                "description": "Bosilmalar va agent ulushi - real vaqt rejimida.",
+                                "cta": "Daromadlar paneli"
+                        },
+                        "apiDemo": {
+                                "title": "Demo chatda API-ni sinab ko'ring",
+                                "description": "sk-synaptic-demo kaliti bilan javob va reklama formatini ko'ring.",
+                                "cta": "Demo chat"
+                        }
+                }
+        },
+        "landing": {
+                "hero": {
+                        "label": "The AI-Native Ad Protocol",
+                        "title": "AI davrining yangi reklama protokoli",
+                        "subtitle": "Generativ AI va chat-botlar uchun AdSense yechimi — reklama banner emas, suhbat ichida tabiiy va o‘lchanadigan.",
+                        "description": "Trafik bor, pul yo‘q — botlarda. Biznesda pul bor, AI auditoriyasiga yo‘l yo‘q. Synaptic ikkalasini bog‘laydi.",
+                        "startBusiness": "Biznes sifatida boshlash",
+                        "demoChat": "Demo chat",
+                        "stats": {
+                                "adSelection": "Reklama tanlash",
+                                "avgCpc": "O‘rtacha CPC",
+                                "agentShare": "Agent ulushi"
+                        }
+                },
+                "problem": {
+                        "label": "Muammo",
+                        "title": "Zero-click search inqirozi va monetizatsiya bo‘shlig‘i",
+                        "items": {
+                                "zeroClick": {
+                                        "title": "Zero-click inqiroz",
+                                        "desc": "2028-yilga qadar organik qidiruv trafigi 50% ga qisqarishi kutilmoqda — auditoriya AI chatlarga o‘tmoqda."
+                                },
+                                "bannerBlindness": {
+                                        "title": "Banner ko‘rligi",
+                                        "desc": "An’anaviy reklama CTR 0.5% dan past. Biznes byudjet sarflaydi, natija esa kam."
+                                },
+                                "infraCosts": {
+                                        "title": "AI infra xarajatlari",
+                                        "desc": "Bot yaratuvchilar token va server uchun pul to‘laydi, tayyor monetizatsiya tizimi yo‘q."
+                                }
+                        }
+                },
+                "features": {
+                        "label": "Yechim",
+                        "title": "Synaptic arxitekturasi — AI javobiga mos, tez, shaffof",
+                        "items": {
+                                "contextual": {
+                                        "title": "Kontekstli embedding",
+                                        "desc": "So‘rov vektorlashtiriladi — LLM javobiga zarar yetkazmasdan parallel mos reklama tanlanadi."
+                                },
+                                "native": {
+                                        "title": "Nativ tavsiya",
+                                        "desc": "Banner emas — reklama AI javobining ostida tabiiy “Synaptic tavsiyasi” ko‘rinishida."
+                                },
+                                "fastIntegration": {
+                                        "title": "5 daqiqada ulanish",
+                                        "desc": "Bitta REST API: Telegram bot, veb yoki korporativ chat — tez integratsiya."
+                                }
+                        }
+                },
+                "pipeline": {
+                        "label": "Pipeline",
+                        "title": "4 bosqichli data pipeline",
+                        "subtitle": "Butun jarayon 150 millisekunddan kam — foydalanuvchi bot tezligida sezilmaydi.",
+                        "steps": {
+                                "scan": {
+                                        "title": "So‘rovni skanerlash",
+                                        "desc": "Prompt va javob SDK orqali asinxron uzatiladi"
+                                },
+                                "vectorize": {
+                                        "title": "Vektorizatsiya",
+                                        "desc": "O‘zbek tiliga mos embedding modeli"
+                                },
+                                "match": {
+                                        "title": "Moslashtirish",
+                                        "desc": "Cosine similarity — reklama bazasi bilan"
+                                },
+                                "output": {
+                                        "title": "Nativ chiqish",
+                                        "desc": "Tavsiya + tracking havolasi — <150ms"
+                                }
+                        }
+                },
+                "market": {
+                        "label": "Bozor",
+                        "title": "TAM / SAM / SOM",
+                        "items": {
+                                "tam": {
+                                        "hint": "UZ digital reklama bozori"
+                                },
+                                "sam": {
+                                        "hint": "Telegram + kontekstli performance"
+                                },
+                                "som": {
+                                        "hint": "12–18 oy yillik nishon"
+                                }
+                        }
+                },
+                "business": {
+                        "label": "Biznes model",
+                        "title": "RevShare tarmog‘i",
+                        "avgCpc": "O‘rtacha CPC",
+                        "revShare": {
+                                "agent": "Publisher (agent) — 60%",
+                                "synaptic": "Synaptic — 40%",
+                                "netProfit": "Net profit (IT Park)",
+                                "annualHint": "* Pitch deck prognozi, SOM ssenariysi",
+                                "agentValue": "6.6k / yil*",
+                                "synapticValue": "7.7k / yil*",
+                                "netProfitValue": "4.3k / yil*"
+                        }
+                },
+                "compare": {
+                        "label": "Raqobat",
+                        "title": "Global va regional tizimlar O‘zbek semantikasini tushunmaydi",
+                        "headers": {
+                                "market": "Bozor",
+                                "global": "AQSH / Global",
+                                "russia": "Rossiya",
+                                "synaptic": "O‘zbekiston · Synaptic"
+                        },
+                        "rows": {
+                                "semantics": {
+                                        "label": "Semantika",
+                                        "global": "Ingliz tili",
+                                        "russia": "Rus tili",
+                                        "synaptic": "O‘zbek tili"
+                                },
+                                "format": {
+                                        "label": "Format",
+                                        "global": "Banner / display",
+                                        "russia": "Klassik web",
+                                        "synaptic": "AI ichida nativ"
+                                },
+                                "revenue": {
+                                        "label": "Agent daromad",
+                                        "global": "N/A",
+                                        "russia": "Cheklangan",
+                                        "synaptic": "RevShare 60%"
+                                }
+                        }
+                },
+                "roadmap": {
+                        "label": "Strategiya",
+                        "title": "Bozorga kirish",
+                        "items": {
+                                "phase1": {
+                                        "phase": "0–3 oy",
+                                        "title": "Ulanish",
+                                        "metric": "1.5M MAU",
+                                        "desc": "Top o‘zbekcha AI botlar. 70/30 RevShare aksiyadorlik."
+                                },
+                                "phase2": {
+                                        "phase": "3–6 oy",
+                                        "title": "Test",
+                                        "metric": "30 brend",
+                                        "desc": "EdTech, FinTech, e-commerce. 5k sinov byudjeti."
+                                },
+                                "phase3": {
+                                        "phase": "6–12 oy",
+                                        "title": "Masshtab",
+                                        "metric": "35% fill",
+                                        "desc": "Self-service kabinet. Uzum API integratsiyasi."
+                                }
+                        }
+                },
+                "audience": {
+                        "title": "Kimlar uchun Synaptic?",
+                        "subtitle": "Bir platforma — ikki tomondan tarmoq effekti: bizneslar auditoriyaga yetadi, agentlar daromad oladi.",
+                        "business": {
+                                "title": "Biznes / brend",
+                                "features": {
+                                        "native": "AI ichida nativ reklama",
+                                        "wallet": "Hamyon va kampaniya byudjeti",
+                                        "analytics": "CTR va CPC analitika"
+                                },
+                                "cta": "Kabinet ochish"
+                        },
+                        "agent": {
+                                "title": "AI agent / publisher",
+                                "features": {
+                                        "api": "REST API 5 daqiqada",
+                                        "revShare": "60% RevShare",
+                                        "demo": "Demo kalit bilan sinash"
+                                },
+                                "cta": "Agent qo‘shish"
+                        }
+                },
+                "final": {
+                        "title": "O‘zbekiston va Markaziy Osiyoning birinchi AI reklama tarmog‘i",
+                        "subtitle": "MVP tayyor — demo chatda nativ reklamani ko‘ring, keyin kampaniya yoki agentingizni ulang.",
+                        "startFree": "Bepul boshlash",
+                        "login": "Kirish"
+                },
+                "footer": {
+                        "copy": "Synaptic — AI-Native Ad Protocol"
+                }
+        }
+}

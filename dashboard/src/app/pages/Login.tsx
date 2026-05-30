@@ -1,10 +1,15 @@
 import { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../../lib/api';
 import { Lock, Mail, Loader2 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { AuthLayout, AuthCard, FormField, inputClassName, Logo, Alert } from '../components/design';
+import { cn } from '../components/ui/utils';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,75 +25,79 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { token, user } = await api.login({ email, password });
-      login(token, user);
-      const defaultPath = user.role === 'business' ? '/business/analytics' : '/agent/analytics';
-      navigate(from || defaultPath, { replace: true });
+      const { token, user, refreshToken } = await api.login({ email, password });
+      login(token, user, refreshToken);
+      navigate(from || '/', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Kirish muvaffaqiyatsiz');
+      setError(err.message || t('auth.loginFailed'));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-gray-50 px-4 py-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">Kirish</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Synaptic AI ga xush kelibsiz
-          </p>
+    <AuthLayout>
+      <Helmet>
+        <title>{t('auth.signIn')} - Synaptic AI</title>
+        <meta name="description" content="Synaptic AI tizimiga kirish va o‘z reklamalaringizni boshqarish." />
+        <link rel="canonical" href="https://synaptic.uz/login" />
+      </Helmet>
+      <AuthCard>
+        <div className="text-center mb-8">
+          <div className="mx-auto mb-4 flex justify-center">
+            <Logo size="lg" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)]">{t('auth.signIn')}</h1>
+          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{t('auth.welcomeBack')}</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm border border-red-100">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md shadow-sm -space-y-px">
+
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {error && <Alert>{error}</Alert>}
+
+          <FormField label={t('auth.email')}>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
               <input
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-[#0000FF] focus:border-[#0000FF] focus:z-10 sm:text-sm"
-                placeholder="Elektron pochta"
+                className={cn(inputClassName, 'pl-12')}
+                placeholder="siz@kompaniya.uz"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+          </FormField>
+
+          <FormField label={t('auth.password')}>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
               <input
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-[#0000FF] focus:border-[#0000FF] focus:z-10 sm:text-sm"
-                placeholder="Parol"
+                className={cn(inputClassName, 'pl-12')}
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          </div>
+          </FormField>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#0000FF] hover:bg-[#0000CC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0000FF] disabled:opacity-50 transition-colors"
-            >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Kirish'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full min-h-12 rounded-[var(--radius-md)] bg-[var(--color-primary)] text-sm font-semibold text-white shadow-[var(--shadow-glow)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('auth.signIn')}
+          </button>
 
-          <div className="text-center text-sm">
-            <span className="text-gray-600">Hisobingiz yo‘qmi? </span>
-            <Link to="/register" className="font-medium text-[#0000FF] hover:text-[#0000CC]">
-              Ro‘yxatdan o‘ting
+          <p className="text-center text-sm text-[var(--color-text-secondary)]">
+            {t('auth.noAccount')}{' '}
+            <Link to="/register" className="font-semibold text-[var(--color-primary)] hover:underline">
+              {t('auth.register')}
             </Link>
-          </div>
+          </p>
         </form>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthLayout>
   );
 }

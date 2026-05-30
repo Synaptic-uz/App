@@ -1,0 +1,648 @@
+{
+        "language": "English",
+        "currency": "UZS",
+        "currencySymbol": "сўм",
+        "auth": {
+                "login": "Login",
+                "register": "Register",
+                "logout": "Logout",
+                "email": "Email",
+                "password": "Password",
+                "confirmPassword": "Confirm Password",
+                "businessOwner": "Business Owner",
+                "agent": "Agent",
+                "role": "Role",
+                "signUp": "Sign up",
+                "signIn": "Sign in",
+                "alreadyAccount": "Already have an account?",
+                "noAccount": "Don't have an account?",
+                "forgotPassword": "Forgot password?",
+                "rememberMe": "Remember me",
+                "loginPageTitle": "Login - Synaptic AI",
+                "loginPageDesc": "Log in to Synaptic AI and manage your advertisements.",
+                "welcomeBack": "Welcome to Synaptic AI",
+                "emailPlaceholder": "you@company.uz",
+                "passwordPlaceholder": "••••••••",
+                "loginFailed": "Login failed",
+                "registerPageTitle": "Register - Synaptic AI",
+                "registerPageDesc": "Join Synaptic AI and start advertising through AI agents.",
+                "createAccount": "Create Account",
+                "joinFuture": "Join the future of AI advertising",
+                "roleBusiness": "Business",
+                "roleAgent": "AI Agent",
+                "registerFailed": "Registration failed"
+        },
+        "navigation": {
+                "home": "Home",
+                "dashboard": "Dashboard",
+                "campaigns": "Campaigns",
+                "campaigns_plural": "Campaigns",
+                "analytics": "Analytics",
+                "agents": "Agents",
+                "wallet": "Wallet",
+                "profile": "Profile",
+                "settings": "Settings",
+                "chat": "Chat",
+                "demo": "Demo",
+                "help": "Help"
+        },
+        "campaigns": {
+                "title": "Campaigns",
+                "create": "Create Campaign",
+                "edit": "Edit Campaign",
+                "delete": "Delete Campaign",
+                "name": "Campaign Name",
+                "category": "Category",
+                "subcategory": "Subcategory",
+                "customCategory": "Custom Category",
+                "brandUrl": "Brand URL",
+                "linkText": "Link Text",
+                "tagline": "Tagline",
+                "description": "Description",
+                "keywords": "Keywords",
+                "nicheKeywords": "Niche Keywords",
+                "offerings": "Products/Services",
+                "cpcRate": "CPC Rate",
+                "tone": "Tone",
+                "status": "Status",
+                "active": "Active",
+                "inactive": "Inactive",
+                "pause": "Pause",
+                "resume": "Resume",
+                "createdAt": "Created",
+                "updatedAt": "Updated",
+                "noData": "No campaigns yet",
+                "createFirst": "Create your first campaign",
+                "successCreate": "Campaign created successfully",
+                "successUpdate": "Campaign updated successfully",
+                "successDelete": "Campaign deleted successfully",
+                "errorCreate": "Failed to create campaign",
+                "errorUpdate": "Failed to update campaign",
+                "errorDelete": "Failed to delete campaign",
+                "errorLoad": "Failed to load campaigns",
+                "successCopyLink": "Tracking link copied",
+                "successRefreshEmbedding": "Embedding refreshed successfully",
+                "errorRefreshEmbedding": "Failed to refresh embedding",
+                "confirmDelete": "Are you sure you want to delete \"{{name}}\"?",
+                "errorValidation": "Add at least one keyword or product/service",
+                "successResume": "Campaign resumed",
+                "successPause": "Campaign paused",
+                "errorStatusUpdate": "Failed to update status",
+                "copyTrackingLink": "Copy tracking link",
+                "refreshEmbedding": "Refresh embedding",
+                "listTitle": "Available Campaigns",
+                "paused": "Paused",
+                "budget": "Budget",
+                "remaining": "Remaining",
+                "cpc": "CPC",
+                "trackingCode": "Tracking Code",
+                "form": {
+                        "basicInfo": "Basic Information",
+                        "keywordsHint": "Comma separated or auto from products",
+                        "cpcHint": "Per click",
+                        "ctaPlaceholder": "Learn more",
+                        "creating": "Creating...",
+                        "saving": "Saving...",
+                        "errorInvalidUrl": "Enter a valid brand URL first (https://...)",
+                        "successResearch": "Fields and {{count}} products/services filled",
+                        "successResearchAll": "All fields filled by AI",
+                        "errorResearch": "AI research failed",
+                        "aiTitle": "AI Full Auto-fill",
+                        "aiDesc": "All fields are automatically filled when a link is entered. Click the button to refresh manually.",
+                        "researchBrief": "Short description (optional)",
+                        "researchBriefHint": "Extra context for AI",
+                        "researchBriefPlaceholder": "e.g.: Online courses in Tashkent",
+                        "runAi": "Refill with AI",
+                        "researching": "AI is analyzing...",
+                        "updatingFields": "Fields are updating..."
+                },
+                "firstCampaign": "Your First Campaign",
+                "onboardingDesc": "Enter brand website and products — AI will automatically fill keywords, tagline, and audience.",
+                "editCampaign": "Edit Campaign",
+                "creatingNew": "Creating new campaign...",
+                "headerDesc": "Click \"New Campaign\" — AI will fill the fields. Check results in analytics when ready.",
+                "taMahsulot": "{{count}} products/services",
+                "editNamed": "Edit {{name}}",
+                "deleteNamed": "Delete {{name}}",
+                "tones": {
+                        "informative": "Informative",
+                        "promotional": "Promotional",
+                        "comparative": "Comparative",
+                        "dealFocused": "Discount / Deal"
+                }
+        },
+        "wallet": {
+                "title": "Wallet",
+                "balance": "Balance",
+                "deposit": "Deposit",
+                "withdraw": "Withdraw",
+                "transactions": "Transactions",
+                "amount": "Amount",
+                "date": "Date",
+                "type": "Type",
+                "status": "Status",
+                "mockDeposit": "Test Deposit",
+                "mockDepositAmount": "50,000",
+                "deposit50k": "Deposit 50,000 UZS",
+                "testDepositNote": "Test mode: Mock deposit for demo",
+                "successDeposit": "Deposit successful",
+                "errorDeposit": "Deposit failed",
+                "loadError": "Failed to load wallet",
+                "depositSuccess": "Balance topped up",
+                "depositError": "Deposit failed",
+                "panelTitle": "Ad Wallet",
+                "walletLabel": "Wallet",
+                "unallocated": "Unallocated",
+                "inCampaigns": "In Campaigns",
+                "unusedBudget": "Unused budget",
+                "spent": "Spent",
+                "byClicks": "By clicks",
+                "walletDesc": "Budget is automatically allocated from the wallet when creating a campaign. Ads stop if the budget runs out.",
+                "testDepositLabel": "Test deposit (server: ALLOW_MOCK_DEPOSIT=1)",
+                "depositBtn": "Top up",
+                "uzs": "UZS"
+        },
+        "profile": {
+                "title": "Profile",
+                "displayName": "Display Name",
+                "companyName": "Company Name",
+                "phone": "Phone Number",
+                "email": "Email",
+                "currentPassword": "Current Password",
+                "newPassword": "New Password",
+                "confirmNewPassword": "Confirm New Password",
+                "edit": "Edit Profile",
+                "changePassword": "Change Password",
+                "save": "Save",
+                "cancel": "Cancel",
+                "successUpdate": "Profile updated successfully",
+                "errorUpdate": "Failed to update profile",
+                "loadError": "Failed to load profile data",
+                "sessionsLoadError": "Failed to load sessions",
+                "saveSuccess": "Profile saved",
+                "saveError": "Failed to save profile",
+                "passwordsMismatch": "New passwords do not match",
+                "passwordTooShort": "New password must be at least 6 characters long",
+                "passwordUpdateSuccess": "Password updated",
+                "passwordUpdateError": "Failed to update password",
+                "sessionRevokeSuccess": "Session revoked",
+                "sessionRevokeError": "Failed to revoke session",
+                "sessionsRevokeAllSuccess": "Other sessions revoked",
+                "pageTitle": "Profile — Synaptic",
+                "headerTitle": "Profile",
+                "headerDescBusiness": "Name and company improve AI ad matching. Save, then create a campaign.",
+                "headerDescAgent": "Name and phone are visible in the dashboard. API keys are in the \"Agents\" section.",
+                "noName": "No name provided",
+                "campaigns": "Campaigns",
+                "active": "Active",
+                "agents": "Agents",
+                "clicks": "Clicks",
+                "goToCampaigns": "Go to Campaigns",
+                "goToAgents": "Go to Agents",
+                "infoTab": "Information",
+                "passwordTab": "Password",
+                "sessionsTab": "Sessions",
+                "saveSuccessDesc": "Profile saved. You can now add a {{type}}.",
+                "campaign": "campaign",
+                "agent": "agent",
+                "nameLabel": "Name",
+                "nameHint": "Visible in the dashboard",
+                "namePlaceholder": "e.g.: Dilyor",
+                "companyLabel": "Company",
+                "companyHint": "Used in AI ad copy",
+                "companyPlaceholder": "e.g.: Hamkorbank",
+                "phoneLabel": "Phone",
+                "phoneHint": "Optional",
+                "saveBtn": "Save",
+                "cancelBtn": "Cancel",
+                "passwordNote": "After changing your password, you may need to log in again on other devices.",
+                "currentPasswordLabel": "Current Password",
+                "newPasswordLabel": "New Password",
+                "newPasswordHint": "At least 6 characters",
+                "confirmPasswordLabel": "Confirm Password",
+                "updatePasswordBtn": "Update Password",
+                "sessionsNote": "Active devices. Revoke all sessions to log out from other places.",
+                "loadingSessions": "Loading devices...",
+                "noOtherSessions": "No other active devices — current browser session only",
+                "currentSession": "(current)",
+                "unknownIp": "IP unknown",
+                "lastUsed": "last used: {{date}}",
+                "revokeBtn": "Revoke",
+                "revokeAllBtn": "Revoke all other sessions",
+                "roleBusiness": "Business",
+                "roleAgent": "AI Agent"
+        },
+        "analytics": {
+                "title": "Analytics",
+                "businessAnalytics": "Business Analytics",
+                "agentAnalytics": "Agent Analytics",
+                "impressions": "Impressions",
+                "clicks": "Clicks",
+                "conversions": "Conversions",
+                "ctr": "CTR",
+                "conversionRate": "Conversion Rate",
+                "spent": "Spent",
+                "revenue": "Revenue",
+                "period": "Period",
+                "today": "Today",
+                "week": "Last 7 Days",
+                "month": "Last 30 Days",
+                "all": "All Time",
+                "noDataDesc": "Create your first campaign to see analytics.",
+                "campaignAnalytics": "{{name}} - Analytics",
+                "description": "Last {{days}} days: impressions, clicks, CTR, and budget spent.",
+                "selectCampaign": "Select campaign",
+                "hints": {
+                        "ctr": "Impression → click",
+                        "cpc": "Per click"
+                },
+                "budgetRemaining": "Budget Remaining",
+                "totalBudget": "Total: {{amount}} UZS",
+                "dailyActivity": "Daily Activity",
+                "dailyActivityDesc": "Clicks and impressions — {{days}} days",
+                "funnel": "Conversion Funnel",
+                "funnelDesc": "Impression → click → conversion ({{days}} days)",
+                "stage": "Stage",
+                "count": "Count",
+                "percentage": "Percentage"
+        },
+        "agents": {
+                "title": "Agents",
+                "register": "Register Agent",
+                "username": "Username",
+                "ownerEmail": "Owner email",
+                "apiKey": "API Key",
+                "stats": "Stats",
+                "totalRequests": "Total Requests",
+                "lastSeen": "Last Seen",
+                "active": "Active",
+                "inactive": "Inactive",
+                "successRegister": "Agent registered successfully",
+                "errorRegister": "Failed to register agent",
+                "headerTitle": "AI Agents",
+                "headerDesc": "«Add Agent» — you get an API key. Connect it to your bot, then test it in the demo chat.",
+                "registerBtn": "Register Agent",
+                "registerDialogTitle": "New AI Agent",
+                "registerSuccessDesc": "Agent registered successfully. Copy the API key now — it won't be shown again.",
+                "copy": "Copy",
+                "copied": "Copied!",
+                "ready": "Ready",
+                "usernameLabel": "Agent username *",
+                "usernameHint": "Used in tracking links and analytics",
+                "usernamePlaceholder": "my-telegram-bot",
+                "ownerEmailLabel": "Owner email",
+                "registering": "Registering...",
+                "createApiKey": "Create API key",
+                "noAgents": "No agents registered yet",
+                "registerFirst": "Register your first agent",
+                "lastActivity": "Last activity: {{date}}",
+                "paused": "Paused",
+                "pause": "Pause",
+                "resume": "Resume",
+                "delete": "Delete",
+                "deleteConfirm": "Are you sure you want to delete \"{{username}}\"?",
+                "deleteSuccess": "Agent deleted",
+                "deleteError": "Failed to delete agent",
+                "statusActive": "Agent activated",
+                "statusPaused": "Agent paused",
+                "statusError": "Failed to update status",
+                "agentId": "Agent ID",
+                "status": "Status",
+                "actions": "Actions",
+                "requests": "Requests",
+                "clicks": "Clicks",
+                "registerError": "Failed to register agent"
+        },
+        "chat": {
+                "title": "Chat Demo",
+                "message": "Message",
+                "send": "Send",
+                "placeholder": "Type your message...",
+                "thinking": "Thinking...",
+                "error": "Error",
+                "retry": "Retry",
+                "clear": "Clear",
+                "fallbackAnswer": "I can help with your question. If you write a bit more detail, I can give a more accurate answer.",
+                "welcomeMessage": "**Hello!** I am a simple AI assistant — I will answer your questions.\n\nIf the topic matches, a **native ad** will appear below (just like in Telegram bots). Choose one of the ready-made questions below or write your own.",
+                "moreInfo": "Learn more",
+                "newChatStarted": "New chat started",
+                "aiError": "AI response temporarily unavailable — showing simple response",
+                "pageTitle": "Demo — Synaptic AI chat",
+                "pageDesc": "Synaptic AI chat demo — native ads and Markdown responses.",
+                "homeLink": "Home",
+                "sidebarTitle": "Demo Chat",
+                "sidebarDesc": "AI answer + contextual ad. Try it for Hamkorbank and other campaigns.",
+                "newChat": "New Chat",
+                "back": "Back",
+                "writing": "Writing response...",
+                "demoSubtitle": "Demo · Markdown · native ad",
+                "new": "New",
+                "categories": {
+                        "finance": "Finance",
+                        "tech": "Tech",
+                        "food": "Food",
+                        "fashion": "Fashion",
+                        "bank": "Bank & credit",
+                        "phones": "Phones",
+                        "delivery": "Delivery"
+                },
+                "prompts": {
+                        "loan": "Can I get a loan from Hamkorbank?",
+                        "installment": "Shopping with installments",
+                        "laptop": "I want to buy a laptop",
+                        "iphone": "What are the prices for iPhone 15?",
+                        "pizza": "Pizza delivery in Tashkent",
+                        "dinner": "Order dinner",
+                        "clothing": "Where can I get clothes?",
+                        "sneakers": "Sneaker prices"
+                },
+                "inputPlaceholder": "Type your question..."
+        },
+        "common": {
+                "save": "Save",
+                "cancel": "Cancel",
+                "delete": "Delete",
+                "edit": "Edit",
+                "add": "Add",
+                "remove": "Remove",
+                "loading": "Loading...",
+                "error": "Error",
+                "success": "Success",
+                "warning": "Warning",
+                "yes": "Yes",
+                "no": "No",
+                "search": "Search",
+                "filter": "Filter",
+                "sort": "Sort",
+                "close": "Close",
+                "next": "Next",
+                "previous": "Previous",
+                "back": "Back",
+                "submit": "Submit",
+                "copy": "Copy",
+                "share": "Share",
+                "download": "Download",
+                "export": "Export",
+                "import": "Import",
+                "days": "day",
+                "uzs": "UZS",
+                "thousandUzs": "thousand UZS",
+                "status": "Status",
+                "actions": "Actions",
+                "select": "Select...",
+                "optional": "(optional)"
+        },
+        "errors": {
+                "required": "This field is required",
+                "invalidEmail": "Invalid email address",
+                "passwordTooShort": "Password must be at least 8 characters",
+                "passwordMismatch": "Passwords do not match",
+                "unauthorized": "Unauthorized",
+                "forbidden": "Forbidden",
+                "notFound": "Not found",
+                "serverError": "Server error",
+                "networkError": "Network error"
+        },
+        "dashboard": {
+                "welcome": "Welcome, {{name}}!",
+                "panel": "Dashboard",
+                "businessDesc": "Follow the steps below to start working in the advertising network.",
+                "agentDesc": "Connect your agent, track earnings, and test the API in the demo chat.",
+                "onboardingProgress": "Onboarding Progress",
+                "ready": "All ready",
+                "nextStep": "Next step",
+                "greatKeepGoing": "Great - keep going",
+                "manageCampaignsOrAnalytics": "Manage campaigns or view analytics.",
+                "monitorAgentsAndEarnings": "Monitor agents and earnings dashboard.",
+                "allSteps": "All steps",
+                "helpNeeded": "Need help?",
+                "checkFormat": "See ad format via demo chat.",
+                "steps": {
+                        "campaign": {
+                                "title": "Create Campaign",
+                                "description": "AI analyzes your brand - keywords and products are auto-filled.",
+                                "cta": "Manage campaigns",
+                                "ctaFirst": "First campaign"
+                        },
+                        "analytics": {
+                                "title": "Track Results",
+                                "description": "CTR, clicks, and budget spent - over a 7-day period.",
+                                "cta": "Open analytics"
+                        },
+                        "demo": {
+                                "title": "Try in Demo Chat",
+                                "description": "See how the ad looks when a user asks a question.",
+                                "cta": "Demo chat"
+                        },
+                        "profile": {
+                                "title": "Complete Profile",
+                                "description": "Company name and contacts - AI selects relevant ads better.",
+                                "cta": "Profile"
+                        },
+                        "agent": {
+                                "title": "Connect Your Agent",
+                                "description": "Get API key and integrate into Telegram or web bot.",
+                                "cta": "Manage agents",
+                                "ctaAdd": "Add agent"
+                        },
+                        "earnings": {
+                                "title": "Track Earnings",
+                                "description": "Clicks and agent share - in real-time.",
+                                "cta": "Earnings dashboard"
+                        },
+                        "apiDemo": {
+                                "title": "Test API in Demo Chat",
+                                "description": "See response and ad format with sk-synaptic-demo key.",
+                                "cta": "Demo chat"
+                        }
+                }
+        },
+        "landing": {
+                "hero": {
+                        "label": "The AI-Native Ad Protocol",
+                        "title": "The New Ad Protocol for the AI Era",
+                        "subtitle": "AdSense solution for Generative AI and chatbots — ads are not banners, but natural and measurable within conversation.",
+                        "description": "Bots have traffic but no money. Businesses have money but no way to reach AI audiences. Synaptic connects both.",
+                        "startBusiness": "Start as Business",
+                        "demoChat": "Demo Chat",
+                        "stats": {
+                                "adSelection": "Ad Selection",
+                                "avgCpc": "Average CPC",
+                                "agentShare": "Agent Share"
+                        }
+                },
+                "problem": {
+                        "label": "The Problem",
+                        "title": "Zero-Click Search Crisis and Monetization Gap",
+                        "items": {
+                                "zeroClick": {
+                                        "title": "Zero-Click Crisis",
+                                        "desc": "Organic search traffic is expected to decrease by 50% by 2028 — audiences are moving to AI chats."
+                                },
+                                "bannerBlindness": {
+                                        "title": "Banner Blindness",
+                                        "desc": "Traditional ad CTR is below 0.5%. Businesses spend budget, but results are low."
+                                },
+                                "infraCosts": {
+                                        "title": "AI Infrastructure Costs",
+                                        "desc": "Bot creators pay for tokens and servers, but there's no ready monetization system."
+                                }
+                        }
+                },
+                "features": {
+                        "label": "The Solution",
+                        "title": "Synaptic Architecture — Contextual, Fast, Transparent",
+                        "items": {
+                                "contextual": {
+                                        "title": "Contextual Embedding",
+                                        "desc": "Query is vectorized — relevant ads are selected in parallel without hurting LLM response."
+                                },
+                                "native": {
+                                        "title": "Native Recommendation",
+                                        "desc": "Not a banner — ads appear naturally as \"Synaptic Recommendation\" below the AI response."
+                                },
+                                "fastIntegration": {
+                                        "title": "5-Minute Integration",
+                                        "desc": "One REST API: Telegram bot, web, or corporate chat — fast integration."
+                                }
+                        }
+                },
+                "pipeline": {
+                        "label": "Pipeline",
+                        "title": "4-Stage Data Pipeline",
+                        "subtitle": "The whole process is less than 150ms — imperceptible at bot speed.",
+                        "steps": {
+                                "scan": {
+                                        "title": "Query Scanning",
+                                        "desc": "Prompt and response are transmitted asynchronously via SDK"
+                                },
+                                "vectorize": {
+                                        "title": "Vectorization",
+                                        "desc": "Embedding model suitable for Uzbek language"
+                                },
+                                "match": {
+                                        "title": "Matching",
+                                        "desc": "Cosine similarity against the ad database"
+                                },
+                                "output": {
+                                        "title": "Native Output",
+                                        "desc": "Recommendation + tracking link — <150ms"
+                                }
+                        }
+                },
+                "market": {
+                        "label": "Market",
+                        "title": "TAM / SAM / SOM",
+                        "items": {
+                                "tam": {
+                                        "hint": "UZ digital advertising market"
+                                },
+                                "sam": {
+                                        "hint": "Telegram + contextual performance"
+                                },
+                                "som": {
+                                        "hint": "12–18 month annual target"
+                                }
+                        }
+                },
+                "business": {
+                        "label": "Business Model",
+                        "title": "RevShare Network",
+                        "avgCpc": "Average CPC",
+                        "revShare": {
+                                "agent": "Publisher (agent) — 60%",
+                                "synaptic": "Synaptic — 40%",
+                                "netProfit": "Net Profit (IT Park)",
+                                "annualHint": "* Pitch deck forecast, SOM scenario",
+                                "agentValue": "6.6k / year*",
+                                "synapticValue": "7.7k / year*",
+                                "netProfitValue": "4.3k / year*"
+                        }
+                },
+                "compare": {
+                        "label": "Competition",
+                        "title": "Global and Regional Systems Don't Understand Uzbek Semantics",
+                        "headers": {
+                                "market": "Market",
+                                "global": "USA / Global",
+                                "russia": "Russia",
+                                "synaptic": "Uzbekistan · Synaptic"
+                        },
+                        "rows": {
+                                "semantics": {
+                                        "label": "Semantics",
+                                        "global": "English",
+                                        "russia": "Russian",
+                                        "synaptic": "Uzbek"
+                                },
+                                "format": {
+                                        "label": "Format",
+                                        "global": "Banner / Display",
+                                        "russia": "Classic Web",
+                                        "synaptic": "Native inside AI"
+                                },
+                                "revenue": {
+                                        "label": "Agent Revenue",
+                                        "global": "N/A",
+                                        "russia": "Limited",
+                                        "synaptic": "RevShare 60%"
+                                }
+                        }
+                },
+                "roadmap": {
+                        "label": "Strategy",
+                        "title": "Market Entry",
+                        "items": {
+                                "phase1": {
+                                        "phase": "0–3 months",
+                                        "title": "Connection",
+                                        "metric": "1.5M MAU",
+                                        "desc": "Top Uzbek AI bots. 70/30 RevShare equity."
+                                },
+                                "phase2": {
+                                        "phase": "3–6 months",
+                                        "title": "Testing",
+                                        "metric": "30 brands",
+                                        "desc": "EdTech, FinTech, e-commerce. 5k pilot budget."
+                                },
+                                "phase3": {
+                                        "phase": "6–12 months",
+                                        "title": "Scaling",
+                                        "metric": "35% fill",
+                                        "desc": "Self-service dashboard. Uzum API integration."
+                                }
+                        }
+                },
+                "audience": {
+                        "title": "Who is Synaptic for?",
+                        "subtitle": "One platform — network effect from both sides: businesses reach audience, agents earn revenue.",
+                        "business": {
+                                "title": "Business / Brand",
+                                "features": {
+                                        "native": "Native ads inside AI",
+                                        "wallet": "Wallet and campaign budget",
+                                        "analytics": "CTR and CPC analytics"
+                                },
+                                "cta": "Open Dashboard"
+                        },
+                        "agent": {
+                                "title": "AI Agent / Publisher",
+                                "features": {
+                                        "api": "REST API in 5 minutes",
+                                        "revShare": "60% RevShare",
+                                        "demo": "Try with demo key"
+                                },
+                                "cta": "Add Agent"
+                        }
+                },
+                "final": {
+                        "title": "The First AI Ad Network for Uzbekistan and Central Asia",
+                        "subtitle": "MVP is ready — see native ads in demo chat, then connect your campaign or agent.",
+                        "startFree": "Start for Free",
+                        "login": "Login"
+                },
+                "footer": {
+                        "copy": "Synaptic — AI-Native Ad Protocol"
+                }
+        }
+}

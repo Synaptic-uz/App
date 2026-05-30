@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, CheckCircle2, XCircle, Copy, Check } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, Copy, Check, Pause, Play, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Skeleton } from '../components/ui/skeleton';
 import {
   Dialog,
@@ -10,8 +12,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../components/ui/dialog';
+import {
+  PageShell,
+  PageHeader,
+  BackLink,
+  AppButton,
+  Alert,
+  Badge,
+  FormField,
+  inputClassName,
+  DataTableShell,
+  MobileCardList,
+  DataCard,
+  IconButton,
+} from '../components/design';
 
 export default function Agents() {
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +38,9 @@ export default function Agents() {
   const [submitting, setSubmitting] = useState(false);
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+
+  const currentLocale = i18n.language === 'uz' ? 'uz-UZ' : i18n.language === 'ru' ? 'ru-RU' : 'en-US';
 
   useEffect(() => {
     loadAgents();
@@ -42,7 +62,6 @@ export default function Agents() {
     e.preventDefault();
     setError('');
     setSubmitting(true);
-
     try {
       const result = await api.registerAgent({
         username,
@@ -54,8 +73,9 @@ export default function Agents() {
       }
       setUsername('');
       await loadAgents();
+      toast.success(t('agents.successRegister'));
     } catch (err: any) {
-      setError(err.message || 'Agent ro‘yxatdan o‘tkazib bo‘lmadi');
+      setError(err.message || t('agents.registerError'));
     } finally {
       setSubmitting(false);
     }
@@ -70,6 +90,53 @@ export default function Agents() {
     }
   }
 
+  async function handleToggleActive(agent: { _id: string; username: string; active: boolean }) {
+    setStatusUpdatingId(agent._id);
+    try {
+      await api.updateAgent(agent._id, { active: !agent.active });
+      toast.success(!agent.active ? t('agents.statusActive') : t('agents.statusPaused'));
+      await loadAgents();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('agents.statusError');
+      toast.error(msg);
+    } finally {
+      setStatusUpdatingId(null);
+    }
+  }
+
+  async function handleDeleteAgent(agent: { _id: string; username: string }) {
+    if (!window.confirm(t('agents.deleteConfirm', { username: agent.username }))) return;
+    try {
+      await api.deleteAgent(agent._id);
+      toast.success(t('agents.deleteSuccess'));
+      await loadAgents();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('agents.deleteError');
+      toast.error(msg);
+    }
+  }
+
+  function renderAgentActions(agent: { _id: string; username: string; active: boolean }) {
+    return (
+      <>
+        <IconButton
+          label={agent.active ? t('agents.pause') : t('agents.resume')}
+          onClick={() => handleToggleActive(agent)}
+          disabled={statusUpdatingId === agent._id}
+        >
+          {agent.active ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+        </IconButton>
+        <IconButton
+          label={t('agents.delete')}
+          className="hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger)]"
+          onClick={() => handleDeleteAgent(agent)}
+        >
+          <Trash2 className="w-4 h-4" />
+        </IconButton>
+      </>
+    );
+  }
+
   async function copyApiKey() {
     if (!newApiKey) return;
     await navigator.clipboard.writeText(newApiKey);
@@ -78,144 +145,164 @@ export default function Agents() {
   }
 
   return (
-    <div className="size-full bg-white overflow-auto">
-      <div className="max-w-7xl mx-auto p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-black mb-2">AI agentlar</h1>
-            <p className="text-black/60">Ro‘yxatdan o‘tgan AI agentlar va integratsiyalarni boshqaring</p>
-          </div>
+    <PageShell className="animate-fadeIn">
+      <BackLink />
+
+      <PageHeader
+        title={t('agents.headerTitle')}
+        description={t('agents.headerDesc')}
+        actions={
           <Dialog open={dialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
-              <button className="px-6 py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] transition-colors flex items-center gap-2">
+              <AppButton className="gap-2">
                 <Plus className="w-5 h-5" />
-                Agent ro‘yxatdan o‘tkazish
-              </button>
+                {t('agents.registerBtn')}
+              </AppButton>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md rounded-[var(--radius-xl)]">
               <DialogHeader>
-                <DialogTitle>Yangi AI agent</DialogTitle>
+                <DialogTitle>{t('agents.registerDialogTitle')}</DialogTitle>
               </DialogHeader>
               {newApiKey ? (
-                <div className="space-y-4 mt-4">
-                  <p className="text-sm text-black/70">
-                    Agent muvaffaqiyatli ro‘yxatdan o‘tdi. API kalitini hozir nusxalang — keyin qayta ko‘rsatilmaydi.
+                <div className="space-y-4 mt-2 animate-scaleIn">
+                  <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                    {t('agents.registerSuccessDesc')}
                   </p>
-                  <div className="bg-black/5 p-4 rounded-lg font-mono text-sm break-all border border-black/10">
+                  <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] p-4 font-mono text-sm break-all text-[var(--color-text)]">
                     {newApiKey}
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      onClick={copyApiKey}
-                      className="flex-1 py-2 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] flex items-center justify-center gap-2"
-                    >
+                    <AppButton onClick={copyApiKey} className="flex-1 gap-2">
                       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      {copied ? 'Nusxalandi!' : 'API kalitini nusxalash'}
-                    </button>
-                    <button
-                      onClick={() => handleDialogChange(false)}
-                      className="px-4 py-2 border border-black/20 rounded-lg hover:bg-black/5"
-                    >
-                      Tayyor
-                    </button>
+                      {copied ? t('agents.copied') : t('agents.copy')}
+                    </AppButton>
+                    <AppButton variant="secondary" onClick={() => handleDialogChange(false)}>
+                      {t('agents.ready')}
+                    </AppButton>
                   </div>
                 </div>
               ) : (
-                <form onSubmit={handleRegister} className="space-y-4 mt-4">
-                  {error && (
-                    <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100">
-                      {error}
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-1">Agent foydalanuvchi nomi *</label>
+                <form onSubmit={handleRegister} className="space-y-4 mt-2">
+                  {error && <Alert>{error}</Alert>}
+                  <FormField label={t('agents.usernameLabel')} hint={t('agents.usernameHint')}>
                     <input
                       required
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
-                      className="w-full border border-black/20 rounded-lg px-3 py-2"
-                      placeholder="mening-telegram-botim"
+                      className={inputClassName}
+                      placeholder={t('agents.usernamePlaceholder')}
                     />
-                    <p className="text-xs text-black/50 mt-1">Kuzatuv havolalari va analitikada ishlatiladi</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-1">Egasi emaili</label>
-                    <input
-                      disabled
-                      value={user?.email || ''}
-                      className="w-full border border-black/20 rounded-lg px-3 py-2 bg-black/5"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-3 bg-[#0000FF] text-white rounded-lg hover:bg-[#0000CC] disabled:opacity-50"
-                  >
-                    {submitting ? 'Ro‘yxatdan o‘tkazilmoqda...' : 'API kalit yaratish'}
-                  </button>
+                  </FormField>
+                  <FormField label={t('agents.ownerEmailLabel')}>
+                    <input disabled value={user?.email || ''} className={inputClassName} />
+                  </FormField>
+                  <AppButton type="submit" disabled={submitting} className="w-full">
+                    {submitting ? t('agents.registering') : t('agents.createApiKey')}
+                  </AppButton>
                 </form>
               )}
             </DialogContent>
           </Dialog>
-        </div>
+        }
+      />
 
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-24 w-full rounded-xl bg-black/5" />
+      {loading ? (
+        <div className="space-y-4">
+          {[1, 2].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-[var(--radius-lg)] bg-[var(--color-bg-subtle)]" />
+          ))}
+        </div>
+      ) : agents.length === 0 ? (
+        <div className="rounded-[var(--radius-xl)] border border-dashed border-[var(--color-border-strong)] bg-[var(--color-surface)] p-12 text-center">
+          <p className="text-[var(--color-text-secondary)] mb-4">{t('agents.noAgents')}</p>
+          <AppButton onClick={() => setDialogOpen(true)} className="gap-2">
+            <Plus className="w-5 h-5" />
+            {t('agents.registerFirst')}
+          </AppButton>
+        </div>
+      ) : (
+        <>
+          <MobileCardList>
+            {agents.map((agent) => (
+              <DataCard
+                key={agent._id}
+                title={agent.username}
+                subtitle={agent.owner_email}
+                meta={t('agents.lastActivity', { 
+                  date: new Date(agent.last_seen || agent.updatedAt).toLocaleDateString(currentLocale) 
+                })}
+                badges={
+                  agent.active ? (
+                    <Badge variant="success">
+                      <CheckCircle2 className="w-3 h-3" /> {t('agents.active')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="danger">
+                      <XCircle className="w-3 h-3" /> {t('agents.paused')}
+                    </Badge>
+                  )
+                }
+                actions={renderAgentActions(agent)}
+              />
             ))}
-          </div>
-        ) : (
-          <div className="bg-white border-2 border-black/10 rounded-xl overflow-hidden">
-            <table className="w-full text-left">
-              <thead className="bg-black/5 border-b-2 border-black/10">
+          </MobileCardList>
+
+          <DataTableShell>
+            <table className="w-full text-left text-sm">
+              <thead className="bg-[var(--color-bg-subtle)] border-b border-[var(--color-border)]">
                 <tr>
-                  <th className="p-4 font-semibold text-black">Agent ID (foydalanuvchi nomi)</th>
-                  <th className="p-4 font-semibold text-black">Egasi emaili</th>
-                  <th className="p-4 font-semibold text-black text-center">Holat</th>
-                  <th className="p-4 font-semibold text-black text-right">Jami so‘rovlar</th>
-                  <th className="p-4 font-semibold text-black text-right">Yaratilgan bosishlar</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)]">{t('agents.agentId')}</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)]">{t('agents.ownerEmail')}</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)] text-center">{t('agents.status')}</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)] text-center">{t('agents.actions')}</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)] text-right">{t('agents.requests')}</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)] text-right">{t('agents.clicks')}</th>
                 </tr>
               </thead>
               <tbody>
                 {agents.map((agent) => (
-                  <tr key={agent._id} className="border-b border-black/5 hover:bg-black/5 transition-colors">
-                    <td className="p-4 font-medium text-black">
-                      {agent.username}
-                      <div className="text-xs text-black/60 font-normal">
-                        Oxirgi faollik: {new Date(agent.last_seen || agent.updatedAt).toLocaleDateString('uz-UZ')}
-                      </div>
+                  <tr
+                    key={agent._id}
+                    className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-bg-subtle)]/80 transition-colors"
+                  >
+                    <td className="p-4">
+                      <p className="font-semibold text-[var(--color-text)]">{agent.username}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                        {t('agents.lastActivity', { 
+                          date: new Date(agent.last_seen || agent.updatedAt).toLocaleDateString(currentLocale) 
+                        })}
+                      </p>
                     </td>
-                    <td className="p-4 text-black/80">{agent.owner_email}</td>
+                    <td className="p-4 text-[var(--color-text-secondary)]">{agent.owner_email}</td>
                     <td className="p-4 text-center">
                       {agent.active ? (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full font-medium">
-                          <CheckCircle2 className="w-3 h-3" /> Faol
-                        </span>
+                        <Badge variant="success">
+                          <CheckCircle2 className="w-3 h-3" /> {t('agents.active')}
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-sm rounded-full font-medium">
-                          <XCircle className="w-3 h-3" /> Nofaol
-                        </span>
+                        <Badge variant="danger">
+                          <XCircle className="w-3 h-3" /> {t('agents.paused')}
+                        </Badge>
                       )}
                     </td>
-                    <td className="p-4 text-right text-black">{(agent.total_requests || 0).toLocaleString('uz-UZ')}</td>
-                    <td className="p-4 text-right text-[#0000FF] font-medium">
-                      {(agent.total_clicks || 0).toLocaleString('uz-UZ')}
+                    <td className="p-4">
+                      <div className="flex items-center justify-center gap-1">
+                        {renderAgentActions(agent)}
+                      </div>
+                    </td>
+                    <td className="p-4 text-right tabular-nums text-[var(--color-text)]">
+                      {(agent.total_requests || 0).toLocaleString(currentLocale)}
+                    </td>
+                    <td className="p-4 text-right tabular-nums font-semibold text-[var(--color-primary)]">
+                      {(agent.total_clicks || 0).toLocaleString(currentLocale)}
                     </td>
                   </tr>
                 ))}
-                {agents.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-black/60">
-                      Hali agentlar ro‘yxatdan o‘tmagan.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
-          </div>
-        )}
-      </div>
-    </div>
+          </DataTableShell>
+        </>
+      )}
+    </PageShell>
   );
 }

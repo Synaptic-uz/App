@@ -1,3 +1,28 @@
 @import './fonts.css';
+@import './design-tokens.css';
 @import './tailwind.css';
 @import './theme.css';
+@import './globals.css';
+@import './scrollbars.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+#root {
+  min-height: 100dvh;
+}

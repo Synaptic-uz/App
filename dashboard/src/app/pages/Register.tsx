@@ -1,13 +1,20 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, Link, useLocation } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../../lib/api';
 import { Lock, Mail, Briefcase, Bot, Loader2 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { AuthLayout, AuthCard, FormField, inputClassName, Logo, Alert } from '../components/design';
+import { cn } from '../components/ui/utils';
 
 export default function Register() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'business' | 'agent'>('business');
+  const location = useLocation();
+  const initialRole = (location.state as { role?: 'business' | 'agent' })?.role ?? 'business';
+  const [role, setRole] = useState<'business' | 'agent'>(initialRole);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
@@ -19,98 +26,115 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      const { token, user } = await api.register({ email, password, role });
-      login(token, user);
-      navigate(role === 'business' ? '/business/analytics' : '/agent/analytics');
+      const { token, user, refreshToken } = await api.register({ email, password, role });
+      login(token, user, refreshToken);
+      navigate('/', { replace: true });
     } catch (err: any) {
-      setError(err.message || 'Ro‘yxatdan o‘tish muvaffaqiyatsiz');
+      setError(err.message || t('auth.registerFailed'));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-gray-50 px-4 py-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg border border-gray-100">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">Hisob yaratish</h2>
-          <p className="mt-2 text-sm text-gray-600">
-            AI reklamasining kelajagiga qo‘shiling
-          </p>
+    <AuthLayout>
+      <Helmet>
+        <title>{t('auth.registerPageTitle')}</title>
+        <meta name="description" content={t('auth.registerPageDesc')} />
+        <link rel="canonical" href="https://synaptic.uz/register" />
+      </Helmet>
+      <AuthCard>
+        <div className="text-center mb-8">
+          <div className="mx-auto mb-4 flex justify-center">
+            <Logo size="lg" />
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)]">{t('auth.createAccount')}</h1>
+          <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{t('auth.joinFuture')}</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm border border-red-100">
-              {error}
-            </div>
-          )}
 
-          <div className="flex gap-4 mb-6">
-            <button
-              type="button"
-              onClick={() => setRole('business')}
-              className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                role === 'business' ? 'border-[#0000FF] bg-[#0000FF]/5' : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <Briefcase className={`w-6 h-6 ${role === 'business' ? 'text-[#0000FF]' : 'text-gray-400'}`} />
-              <span className={`text-sm font-medium ${role === 'business' ? 'text-gray-900' : 'text-gray-500'}`}>Biznes</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('agent')}
-              className={`flex-1 flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                role === 'agent' ? 'border-[#0000FF] bg-[#0000FF]/5' : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <Bot className={`w-6 h-6 ${role === 'agent' ? 'text-[#0000FF]' : 'text-gray-400'}`} />
-              <span className={`text-sm font-medium ${role === 'agent' ? 'text-gray-900' : 'text-gray-500'}`}>AI agent</span>
-            </button>
+        <form className="space-y-5" onSubmit={handleSubmit}>
+          {error && <Alert>{error}</Alert>}
+
+          <div className="grid grid-cols-2 gap-3">
+            {(
+              [
+                { id: 'business' as const, label: t('auth.roleBusiness'), icon: Briefcase },
+                { id: 'agent' as const, label: t('auth.roleAgent'), icon: Bot },
+              ] as const
+            ).map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setRole(id)}
+                className={cn(
+                  'flex flex-col items-center gap-2 min-h-[88px] rounded-[var(--radius-md)] border-2 p-4 transition-all',
+                  role === id
+                    ? 'border-[var(--color-primary)] bg-[var(--color-primary-muted)] shadow-[var(--shadow-xs)]'
+                    : 'border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
+                )}
+              >
+                <Icon
+                  className={cn(
+                    'w-6 h-6',
+                    role === id ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-sm font-semibold',
+                    role === id ? 'text-[var(--color-text)]' : 'text-[var(--color-text-secondary)]'
+                  )}
+                >
+                  {label}
+                </span>
+              </button>
+            ))}
           </div>
 
-          <div className="rounded-md shadow-sm -space-y-px">
+          <FormField label={t('auth.email')}>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
               <input
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-[#0000FF] focus:border-[#0000FF] focus:z-10 sm:text-sm"
-                placeholder="Elektron pochta"
+                className={cn(inputClassName, 'pl-12')}
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+          </FormField>
+
+          <FormField label={t('auth.password')}>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
               <input
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-[#0000FF] focus:border-[#0000FF] focus:z-10 sm:text-sm"
-                placeholder="Parol"
+                className={cn(inputClassName, 'pl-12')}
+                placeholder={t('auth.passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          </div>
+          </FormField>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#0000FF] hover:bg-[#0000CC] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0000FF] disabled:opacity-50 transition-colors"
-            >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Hisob yaratish'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full min-h-12 rounded-[var(--radius-md)] bg-[var(--color-primary)] text-sm font-semibold text-white shadow-[var(--shadow-glow)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('auth.createAccount')}
+          </button>
 
-          <div className="text-center text-sm">
-            <span className="text-gray-600">Allaqachon hisobingiz bormi? </span>
-            <Link to="/login" className="font-medium text-[#0000FF] hover:text-[#0000CC]">
-              Kirish
+          <p className="text-center text-sm text-[var(--color-text-secondary)]">
+            {t('auth.alreadyAccount')}{' '}
+            <Link to="/login" className="font-semibold text-[var(--color-primary)] hover:underline">
+              {t('auth.signIn')}
             </Link>
-          </div>
+          </p>
         </form>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthLayout>
   );
 }

@@ -1,0 +1,77 @@
+/**
+ * Synaptic scrollbar — Firefox + WebKit (Chrome, Safari, Edge)
+ * Scroll paydo bo‘lgan barcha overflow konteynerlarda ishlaydi.
+ */
+
+/* Firefox */
+html,
+.synaptic-scroll,
+[data-scrollable='true'] {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+/* Asosiy sahifa — layout siljishini kamaytirish */
+html {
+  scrollbar-gutter: stable;
+}
+
+.synaptic-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* WebKit — global (faqat scroll bo‘lgan elementlarda ko‘rinadi) */
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: var(--radius-full);
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color var(--duration-fast) ease;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Katta scroll zonalar (chat, dialog) */
+.synaptic-scroll-lg::-webkit-scrollbar {
+  width: var(--scrollbar-size-lg);
+  height: var(--scrollbar-size-lg);
+}
+
+/* Dialog / dropdown ichida biroz yengilroq */
+[role='dialog'] ::-webkit-scrollbar-thumb,
+[data-radix-select-viewport]::-webkit-scrollbar-thumb {
+  background-color: rgba(17, 17, 17, 0.18);
+}
+
+[role='dialog'] ::-webkit-scrollbar-thumb:hover,
+[data-radix-select-viewport]::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 28, 255, 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *::-webkit-scrollbar-thumb {
+    transition: none;
+  }
+}

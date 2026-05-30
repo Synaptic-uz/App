@@ -1,0 +1,87 @@
+:root {
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --leading-tight: 1.15;
+  --leading-normal: 1.55;
+
+  /* Layout */
+  --page-max: 1180px;
+  --page-px: clamp(1rem, 3vw, 2rem);
+  --header-h: 4rem;
+  --bottom-nav-h: 4.5rem;
+
+  /* Spacing: 4px grid */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-12: 48px;
+
+  /* Synaptic palette */
+  --color-primary: #001cff;
+  --color-primary-hover: #0016cc;
+  --color-primary-muted: #e8ecff;
+  --color-primary-subtle: #f2f5ff;
+  --color-accent: #7c3aed;
+
+  --color-bg: #f8fafc;
+  --color-bg-subtle: #f1f5f9;
+  --color-surface: #ffffff;
+  --color-surface-glass: rgba(255, 255, 255, 0.88);
+
+  --color-border: #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  --color-text: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-inverse: #ffffff;
+
+  --color-icon-bg: #eef2ff;
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-chart-fill: rgba(0, 28, 255, 0.12);
+
+  /* Shadows: CSS da Shadow.md bo'yicha element/card/button uchun box-shadow. */
+  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.06);
+  --shadow-sm: 0 2px 8px -2px rgba(15, 23, 42, 0.12), 0 1px 3px -1px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 10px 24px -12px rgba(15, 23, 42, 0.25), 0 4px 10px -6px rgba(15, 23, 42, 0.12);
+  --shadow-lg: 0 22px 48px -24px rgba(15, 23, 42, 0.34), 0 10px 20px -12px rgba(15, 23, 42, 0.18);
+  --shadow-glow: 0 10px 28px -14px rgba(0, 28, 255, 0.72);
+
+  /* Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-normal: 220ms;
+  --duration-slow: 360ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Scrollbar */
+  --scrollbar-size: 10px;
+  --scrollbar-size-lg: 12px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(100, 116, 139, 0.32);
+  --scrollbar-thumb-hover: rgba(0, 28, 255, 0.42);
+  --scrollbar-thumb-active: rgba(0, 28, 255, 0.62);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --page-px: 1rem;
+  }
+}

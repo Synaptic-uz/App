@@ -1,6 +1,25 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Bot } from 'lucide-react';
+import { Link } from 'react-router';
+import {
+  Send,
+  Bot,
+  RotateCcw,
+  ArrowLeft,
+  Smartphone,
+  Laptop,
+  Coffee,
+  CreditCard,
+  Shirt,
+  Building2,
+} from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
+import { toast } from 'sonner';
 import { api } from '../../lib/api';
+import { markDemoVisited } from '../../lib/onboardingProgress';
+import { MarkdownMessage, sanitizeBotMarkdown } from '../components/MarkdownMessage';
+import { SponsoredCard } from '../components/demo/SponsoredCard';
+import { Logo } from '../components/design';
+import { cn } from '../components/ui/utils';
 
 type Message = {
   id: string;
@@ -11,71 +30,122 @@ type Message = {
     suggestion?: string;
     tracking_url?: string;
     cta_label?: string;
+    campaign_name?: string;
+    category_label?: string;
   };
 };
 
-const MAX_INPUT_HEIGHT = 120;
-
-/** Remove raw URLs from visible chat text — links live on the button only. */
-function maskVisibleUrls(text: string) {
-  return text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/https?:\/\/\S+/g, '')
-    .replace(/  +/g, ' ')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
-}
+const MAX_INPUT_HEIGHT = 140;
+const SESSION_KEY = 'synaptic_demo_session_id';
+const DEMO_API_KEY = 'sk-synaptic-demo';
 
 const FALLBACK_ANSWER =
   "Savolingiz bo'yicha yordam bera olaman. Biroz batafsil yozsangiz, aniqroq javob beraman.";
 
+const PROMPT_GROUPS = [
+  {
+    title: 'Moliya',
+    icon: CreditCard,
+    prompts: ['Hamkorbankdan kredit olish mumkinmi?', 'Muddatli to‘lov bilan xarid qilish'],
+  },
+  {
+    title: 'Texnika',
+    icon: Laptop,
+    prompts: ['Noutbuk sotib olmoqchiman', 'iPhone 15 narxlari qancha?'],
+  },
+  {
+    title: 'Ovqat',
+    icon: Coffee,
+    prompts: ['Toshkentda pizza yetkazib berish', 'Kechki ovqat buyurtma qilish'],
+  },
+  {
+    title: 'Moda',
+    icon: Shirt,
+    prompts: ['Kiyim-kechak qayerdan olsam bo‘ladi?', 'Krossovka narxlari'],
+  },
+];
+
 function getDemoApiKey(): string {
-  return (
-    import.meta.env.VITE_DEMO_API_KEY ||
-    localStorage.getItem('synaptic_demo_api_key') ||
-    ''
-  );
+  return import.meta.env.VITE_DEMO_API_KEY || localStorage.getItem('synaptic_demo_api_key') || DEMO_API_KEY;
 }
+
+function ensureDemoApiKey() {
+  if (!localStorage.getItem('synaptic_demo_api_key') && !import.meta.env.VITE_DEMO_API_KEY) {
+    localStorage.setItem('synaptic_demo_api_key', DEMO_API_KEY);
+  }
+}
+
+function getOrCreateSessionId(): string {
+  let id = sessionStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = `demo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    sessionStorage.setItem(SESSION_KEY, id);
+  }
+  return id;
+}
+
+function newSessionId() {
+  const id = `demo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  sessionStorage.setItem(SESSION_KEY, id);
+  return id;
+}
+
+function toApiHistory(messages: Message[]) {
+  return messages.map((m) => ({
+    role: m.sender === 'user' ? 'user' : 'assistant',
+    content: m.text,
+  }));
+}
+
+const WELCOME_MESSAGE: Message = {
+  id: 'welcome',
+  sender: 'bot',
+  text: '**Assalomu alaykum!** Men oddiy AI yordamchiman — savolingizga javob beraman.\n\nAgar mavzu mos kelsa, pastda **tabiiy reklama** paydo bo‘ladi (xuddi Telegram botlardagi kabi). Quyidagi tayyor savollardan birini tanlang yoki o‘zingiz yozing.',
+};
 
 function buildBotMessage(
   answer: string,
-  sponsored?: { suggestion: string; tracking_url?: string; cta_label?: string }
+  sponsored?: {
+    suggestion: string;
+    tracking_url?: string;
+    cta_label?: string;
+    campaign_name?: string;
+    category_label?: string;
+  }
 ) {
-  const cleanAnswer = maskVisibleUrls(answer);
+  const cleanAnswer = sanitizeBotMarkdown(answer);
   if (!sponsored?.suggestion) {
     return { text: cleanAnswer };
   }
-  const label = sponsored.cta_label || 'Batafsil';
   return {
-    text: `${cleanAnswer}\n\n\n[REKLAMA]: ${sponsored.suggestion}`,
+    text: cleanAnswer,
     ad: {
       match: true,
       suggestion: sponsored.suggestion,
       tracking_url: sponsored.tracking_url,
-      cta_label: label,
+      cta_label: sponsored.cta_label || 'Batafsil',
+      campaign_name: sponsored.campaign_name,
+      category_label: sponsored.category_label,
     },
   };
 }
 
 export default function ChatDemo() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      sender: 'bot',
-      text: 'Assalomu alaykum! Sizga qanday yordam bera olaman?',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sessionIdRef = useRef(getOrCreateSessionId());
+
+  useEffect(() => {
+    ensureDemoApiKey();
+    markDemoVisited();
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     const el = messagesContainerRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
-    }
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, []);
 
   const resizeTextarea = useCallback(() => {
@@ -93,36 +163,56 @@ export default function ChatDemo() {
     resizeTextarea();
   }, [input, resizeTextarea]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const resetChat = () => {
+    sessionIdRef.current = newSessionId();
+    setMessages([WELCOME_MESSAGE]);
+    setInput('');
+    toast.success('Yangi suhbat boshlandi');
+  };
+
+  const sendMessage = async (userText: string) => {
+    if (!userText.trim() || isTyping) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: input.trim(),
+      text: userText.trim(),
     };
+
+    const historyBefore = messages;
+    const apiHistory = toApiHistory([...historyBefore, userMsg]);
 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-    }
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
     setIsTyping(true);
 
     try {
       let answer = FALLBACK_ANSWER;
       try {
-        const enrich = await api.enrich(userMsg.text, { answerOnly: true });
-        if (enrich?.text) answer = maskVisibleUrls(enrich.text);
+        const enrich = await api.enrich(userText, {
+          answerOnly: true,
+          messages: apiHistory,
+          sessionId: sessionIdRef.current,
+          parseMode: 'Markdown',
+        });
+        if (enrich?.text) answer = enrich.text;
       } catch {
-        /* keep fallback */
+        toast.error('AI javob vaqtincha ishlamadi — oddiy javob ko‘rsatilmoqda');
       }
 
-      let sponsored: { suggestion: string; tracking_url?: string; cta_label?: string } | undefined;
-      const demoApiKey = getDemoApiKey();
+      let sponsored:
+        | {
+            suggestion: string;
+            tracking_url?: string;
+            cta_label?: string;
+            campaign_name?: string;
+            category_label?: string;
+          }
+        | undefined;
+
       try {
-        if (!demoApiKey) throw new Error('No demo API key');
-        const synaptic = await api.sendResult(userMsg.text, demoApiKey);
+        const synaptic = await api.sendResult(userText, getDemoApiKey(), { messages: apiHistory });
         const hasValidLink =
           typeof synaptic?.tracking_url === 'string' &&
           synaptic.tracking_url.includes('/t/') &&
@@ -136,27 +226,25 @@ export default function ChatDemo() {
             suggestion: synaptic.suggestion,
             tracking_url: synaptic.tracking_url,
             cta_label: synaptic.cta_label || synaptic.campaign?.link_text || synaptic.campaign?.name,
+            campaign_name: synaptic.campaign?.name,
+            category_label: synaptic.campaign?.category_label,
           };
         }
       } catch {
-        /* sponsored optional */
+        /* reklama ixtiyoriy */
       }
 
       const { text, ad } = buildBotMessage(answer, sponsored);
-
       setMessages((prev) => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: 'bot',
-          text,
-          ad,
-        },
+        { id: (Date.now() + 1).toString(), sender: 'bot', text, ad },
       ]);
     } finally {
       setIsTyping(false);
     }
   };
+
+  const handleSend = () => sendMessage(input);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -165,126 +253,233 @@ export default function ChatDemo() {
     }
   };
 
-  const quickPrompts = [
-    'iPhone 15 narxlari qancha?',
-    'Noutbuk sotib olmoqchiman',
-    'Kofe ichmoqchi edim',
-    'Muddatli tolov bilan xarid',
-    'Kiyim-kechak qayerdan olsam boladi?',
-  ];
+  const showWelcomeExtras = messages.length === 1 && messages[0].id === 'welcome';
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 w-full h-full bg-[#f0f2f5]">
-      {/* Header */}
-      <div className="shrink-0 bg-white border-b border-black/10 px-5 py-3 flex items-center gap-3 shadow-sm">
-        <div className="w-10 h-10 bg-[#3390ec] rounded-full flex items-center justify-center shrink-0">
-          <Bot className="w-5 h-5 text-white" />
-        </div>
-        <div className="min-w-0">
-          <h2 className="font-semibold text-base text-black leading-tight">Synaptic demo bot</h2>
-          <p className="text-black/45 text-sm">
-            {isTyping ? 'yozmoqda…' : getDemoApiKey() ? 'onlayn · reklamalar yoqilgan' : 'onlayn · reklama uchun agent ro‘yxatdan o‘tkazing'}
+    <div className="flex flex-1 min-h-0 h-full bg-[var(--color-bg-subtle)]">
+      <Helmet>
+        <title>Demo — Synaptic AI chat</title>
+        <meta
+          name="description"
+          content="Synaptic AI chat demo — tabiiy reklama va Markdown javoblar."
+        />
+      </Helmet>
+
+      {/* Sidebar — desktop */}
+      <aside className="hidden md:flex w-[280px] shrink-0 flex-col border-r border-[var(--color-border)] bg-white">
+        <div className="p-4 border-b border-[var(--color-border)]">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Bosh sahifa
+          </Link>
+          <h2 className="text-lg font-bold text-[var(--color-text)]">Demo suhbat</h2>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-relaxed">
+            AI javob + kontekst bo‘yicha reklama. Hamkorbank va boshqa kampaniyalar uchun sinab ko‘ring.
           </p>
         </div>
-      </div>
-
-      {/* Messages — fixed height region, scroll inside */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-3 bg-[#f0f2f5]"
-      >
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[min(85%,520px)] rounded-2xl px-4 py-2.5 shadow-sm ${
-                msg.sender === 'user'
-                  ? 'bg-[#3390ec] text-white rounded-br-md'
-                  : 'bg-white text-black border border-black/5 rounded-bl-md'
-              }`}
-            >
-              <div
-                className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words ${
-                  msg.sender === 'user' ? 'text-white' : 'text-black/90'
-                }`}
-              >
-                {msg.text}
+        <div className="synaptic-scroll flex-1 overflow-y-auto p-3 space-y-4" data-scrollable="true">
+          {PROMPT_GROUPS.map((group) => (
+            <div key={group.title}>
+              <div className="flex items-center gap-2 px-1 mb-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+                <group.icon className="w-3.5 h-3.5" />
+                {group.title}
               </div>
-
-              {msg.sender === 'bot' && msg.ad?.match && msg.ad.tracking_url && (
-                <div className="mt-3 pt-3 border-t border-black/10">
-                  <a
-                    href={msg.ad.tracking_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block text-center w-full bg-[#3390ec] hover:bg-[#2b7fd4] transition-colors rounded-lg py-2.5 text-sm font-medium text-white"
+              <div className="space-y-1.5">
+                {group.prompts.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    disabled={isTyping}
+                    onClick={() => sendMessage(q)}
+                    className="w-full text-left text-sm px-3 py-2.5 rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-bg-subtle)] hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-icon-bg)] hover:text-[var(--color-primary)] transition-colors disabled:opacity-50"
                   >
-                    {msg.ad.cta_label || "Batafsil ma'lumot"}
-                  </a>
-                </div>
-              )}
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-
-        {isTyping && (
-          <div className="flex w-full justify-start">
-            <div className="bg-white border border-black/5 text-black/70 rounded-2xl rounded-bl-md px-4 py-3 flex gap-1 shadow-sm">
-              <div className="w-2 h-2 bg-black/30 rounded-full animate-bounce" />
-              <div
-                className="w-2 h-2 bg-black/30 rounded-full animate-bounce"
-                style={{ animationDelay: '0.15s' }}
-              />
-              <div
-                className="w-2 h-2 bg-black/30 rounded-full animate-bounce"
-                style={{ animationDelay: '0.3s' }}
-              />
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} className="h-px shrink-0" aria-hidden />
-      </div>
-
-      {/* Input — pinned bottom, does not grow the page */}
-      <div className="shrink-0 bg-white border-t border-black/10 px-4 py-3">
-        <div className="flex items-end gap-2 max-w-4xl mx-auto w-full">
-          <div className="flex-1 flex items-end gap-2 bg-[#f0f2f5] rounded-2xl px-3 py-1.5 border border-black/5 min-h-[44px]">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Xabar"
-              rows={1}
-              className="flex-1 bg-transparent text-black outline-none resize-none overflow-y-auto text-[15px] leading-[22px] py-2 placeholder:text-black/40 max-h-[120px]"
-              style={{ minHeight: '22px' }}
-            />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!input.trim() || isTyping}
-              className="shrink-0 p-2 text-[#3390ec] hover:bg-black/5 rounded-full transition-colors disabled:opacity-40 mb-0.5"
-              aria-label="Yuborish"
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-2 overflow-x-auto pb-0.5 max-w-4xl mx-auto w-full scrollbar-hide">
-          {quickPrompts.map((q) => (
-            <button
-              key={q}
-              type="button"
-              onClick={() => setInput(q)}
-              className="shrink-0 text-xs px-3 py-1.5 bg-white text-black/70 rounded-full hover:bg-[#3390ec]/10 hover:text-[#3390ec] transition-colors border border-black/10"
-            >
-              {q}
-            </button>
           ))}
         </div>
+        <div className="p-3 border-t border-[var(--color-border)]">
+          <button
+            type="button"
+            onClick={resetChat}
+            className="w-full flex items-center justify-center gap-2 min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] text-sm font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Yangi suhbat
+          </button>
+        </div>
+      </aside>
+
+      {/* Main chat */}
+      <div className="flex flex-col flex-1 min-h-0 min-w-0 relative">
+        <div
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+          aria-hidden
+        >
+          <div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-[var(--color-primary)]/8 blur-3xl" />
+          <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-[var(--color-chart-fill)] blur-3xl" />
+        </div>
+
+        <header className="relative shrink-0 z-10 flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-white/90 backdrop-blur-xl">
+          <Link
+            to="/"
+            className="md:hidden flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
+            aria-label="Orqaga"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div className="relative shrink-0">
+            <Logo size="md" className="ring-2 ring-[var(--color-border)]" />
+            <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-white" aria-hidden />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-bold text-[var(--color-text)] leading-tight">Synaptic AI</h1>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              {isTyping ? 'Javob yozilmoqda…' : 'Demo · Markdown · nativ reklama'}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={resetChat}
+            className="hidden sm:flex items-center gap-1.5 min-h-10 px-3 rounded-[var(--radius-md)] text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] border border-[var(--color-border)]"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Yangi
+          </button>
+        </header>
+
+        <div
+          ref={messagesContainerRef}
+          className="synaptic-scroll synaptic-scroll-lg relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 py-5"
+          data-scrollable="true"
+        >
+          <div className="max-w-2xl mx-auto w-full space-y-5">
+            {showWelcomeExtras && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2 animate-fadeIn">
+                {[
+                  { icon: Building2, label: 'Bank & kredit' },
+                  { icon: Smartphone, label: 'Telefonlar' },
+                  { icon: Coffee, label: 'Yetkazib berish' },
+                  { icon: Shirt, label: 'Moda' },
+                ].map(({ icon: Icon, label }) => (
+                  <div
+                    key={label}
+                    className="flex flex-col items-center gap-2 rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-white/80 p-3 text-center"
+                  >
+                    <Icon className="w-5 h-5 text-[var(--color-primary)]" />
+                    <span className="text-[11px] font-medium text-[var(--color-text-secondary)]">
+                      {label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={cn(
+                  'flex w-full gap-2.5 animate-fadeIn',
+                  msg.sender === 'user' ? 'justify-end' : 'justify-start'
+                )}
+              >
+                {msg.sender === 'bot' && (
+                  <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-icon-bg)] text-[var(--color-primary)] mt-1">
+                    <Bot className="w-4 h-4" />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    'max-w-[min(88%,520px)] rounded-[var(--radius-xl)] px-4 py-3 shadow-[var(--shadow-sm)]',
+                    msg.sender === 'user'
+                      ? 'bg-[var(--color-primary)] text-white rounded-br-md'
+                      : 'bg-white border border-[var(--color-border)] rounded-bl-md'
+                  )}
+                >
+                  {msg.sender === 'user' ? (
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+                      {msg.text}
+                    </p>
+                  ) : (
+                    <MarkdownMessage text={msg.text} inverted={false} />
+                  )}
+
+                  {msg.sender === 'bot' && msg.ad?.match && msg.ad.tracking_url && (
+                    <SponsoredCard
+                      suggestion={msg.ad.suggestion}
+                      campaignName={msg.ad.campaign_name}
+                      categoryLabel={msg.ad.category_label}
+                      trackingUrl={msg.ad.tracking_url}
+                      ctaLabel={msg.ad.cta_label || 'Batafsil'}
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div className="flex gap-2.5 justify-start animate-fadeIn">
+                <div className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-icon-bg)] text-[var(--color-primary)]">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div className="bg-white border border-[var(--color-border)] rounded-[var(--radius-xl)] rounded-bl-md px-4 py-3.5 flex gap-1.5 shadow-[var(--shadow-xs)]">
+                  {[0, 0.12, 0.24].map((delay) => (
+                    <div
+                      key={delay}
+                      className="w-2 h-2 bg-[var(--color-primary)]/50 rounded-full animate-bounce"
+                      style={{ animationDelay: `${delay}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <footer className="relative shrink-0 border-t border-[var(--color-border)] bg-white/95 backdrop-blur-xl px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="max-w-2xl mx-auto w-full">
+            <div className="flex items-end gap-2 rounded-[var(--radius-xl)] border border-[var(--color-border-strong)] bg-white px-3 py-2 shadow-[var(--shadow-sm)] focus-within:border-[var(--color-primary)] focus-within:ring-4 focus-within:ring-[var(--color-primary-muted)] transition-shadow">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Savolingizni yozing…"
+                rows={1}
+                disabled={isTyping}
+                className="flex-1 bg-transparent text-[var(--color-text)] outline-none resize-none text-[15px] leading-[22px] py-2 placeholder:text-[var(--color-text-muted)] max-h-[140px] disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={handleSend}
+                disabled={!input.trim() || isTyping}
+                className="shrink-0 flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-40 transition-all active:scale-95 mb-0.5"
+                aria-label="Yuborish"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="md:hidden flex gap-2 mt-2 overflow-x-auto scrollbar-hide pb-0.5">
+              {PROMPT_GROUPS.flatMap((g) => g.prompts.slice(0, 1)).map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  disabled={isTyping}
+                  onClick={() => sendMessage(q)}
+                  className="shrink-0 text-xs px-3 py-2 bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] rounded-[var(--radius-full)] border border-[var(--color-border)] hover:border-[var(--color-primary)]/40 hover:text-[var(--color-primary)] disabled:opacity-50"
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
