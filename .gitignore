@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
 dashboard/node_modules/
+backend/.venv/
+backend/node_modules/
 
 # Environment variables
 .env
