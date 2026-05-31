@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Helmet } from 'react-helmet-async';
-import { User, Building2, Phone, Lock, Save, Loader2, ArrowRight, Monitor } from 'lucide-react';
+import { User, Building2, Phone, Lock, Save, Loader2, ArrowRight, Monitor, Settings, Coins } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { useCurrency, type Currency } from '../context/CurrencyContext';
 import { toast } from 'sonner';
 import { api } from '../../lib/api';
 import { useAuth } from '../context/AuthContext';
@@ -21,10 +23,12 @@ import {
 } from '../components/design';
 import { cn } from '../components/ui/utils';
 
-type Tab = 'info' | 'password' | 'sessions';
+type Tab = 'info' | 'password' | 'sessions' | 'settings';
 
 export default function Profile() {
+  const { t, i18n } = useTranslation();
   const { user, updateUser } = useAuth();
+  const { currency, setCurrency } = useCurrency();
   const [stats, setStats] = useState<AccountStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('info');
@@ -145,7 +149,7 @@ export default function Profile() {
     try {
       await api.revokeSession(id);
       setSessions((s) => s.filter((x) => x.id !== id));
-      toast.success('Sessiya bekor qilindi');
+      toast.success(t('profile.sessionRevokeSuccess'));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Bekor qilib bo‘lmadi');
     }
@@ -155,15 +159,15 @@ export default function Profile() {
     try {
       await api.revokeAllSessions();
       setSessions((s) => s.filter((x) => x.current));
-      toast.success('Boshqa qurilmalardagi sessiyalar bekor qilindi');
+      toast.success(t('profile.sessionsRevokeAllSuccess'));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Bekor qilib bo‘lmadi');
     }
   }
 
-  const roleLabel = isBusiness ? 'Biznes' : 'AI agent';
+  const roleLabel = isBusiness ? t('auth.roleBusiness') : t('auth.roleAgent');
   const nextPath = isBusiness ? '/business/campaigns' : '/agent/manage';
-  const nextLabel = isBusiness ? 'Kampaniyalarga o‘tish' : 'Agentlarga o‘tish';
+  const nextLabel = isBusiness ? t('profile.goToCampaigns') : t('profile.goToAgents');
 
   if (!user) {
     return (
@@ -184,11 +188,11 @@ export default function Profile() {
       <BackLink />
 
       <PageHeader
-        title="Profil"
+        title={t('profile.headerTitle')}
         description={
           isBusiness
-            ? 'Ism va kompaniya AI reklama mosligini yaxshilaydi. Saqlang — keyin kampaniya yarating.'
-            : 'Ism va telefon kabinetda ko‘rinadi. API kalitlar “Agentlar” bo‘limida.'
+            ? t('profile.headerDescBusiness')
+            : t('profile.headerDescAgent')
         }
       />
 
@@ -200,7 +204,7 @@ export default function Profile() {
             </div>
             <div className="min-w-0">
               <p className="font-semibold text-[var(--color-text)] truncate">
-                {displayName || 'Ism kiritilmagan'}
+                {displayName || t('profile.noName')}
               </p>
               <p className="text-sm text-[var(--color-text-secondary)] truncate">{user.email}</p>
             </div>
@@ -210,11 +214,11 @@ export default function Profile() {
           {!statsLoading && isBusiness && stats && (
             <div className="pt-3 border-t border-[var(--color-border)] space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[var(--color-text-secondary)]">Kampaniyalar</span>
+                <span className="text-[var(--color-text-secondary)]">{t('profile.campaigns')}</span>
                 <span className="font-semibold tabular-nums">{stats.campaigns ?? 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--color-text-secondary)]">Faol</span>
+                <span className="text-[var(--color-text-secondary)]">{t('profile.active')}</span>
                 <span className="font-semibold tabular-nums">{stats.active_campaigns ?? 0}</span>
               </div>
             </div>
@@ -223,11 +227,11 @@ export default function Profile() {
           {!statsLoading && !isBusiness && stats && (
             <div className="pt-3 border-t border-[var(--color-border)] space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-[var(--color-text-secondary)]">Agentlar</span>
+                <span className="text-[var(--color-text-secondary)]">{t('profile.agents')}</span>
                 <span className="font-semibold tabular-nums">{stats.agents ?? 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--color-text-secondary)]">Bosishlar</span>
+                <span className="text-[var(--color-text-secondary)]">{t('profile.clicks')}</span>
                 <span className="font-semibold tabular-nums">{stats.total_clicks ?? 0}</span>
               </div>
             </div>
@@ -246,9 +250,10 @@ export default function Profile() {
           >
             {(
               [
-                { id: 'info' as const, label: 'Ma’lumotlar', icon: User },
-                { id: 'password' as const, label: 'Parol', icon: Lock },
-                { id: 'sessions' as const, label: 'Sessiyalar', icon: Monitor },
+                { id: 'info' as const, label: t('profile.infoTab'), icon: User },
+                { id: 'password' as const, label: t('profile.passwordTab'), icon: Lock },
+                { id: 'settings' as const, label: t('profile.settingsTab'), icon: Settings },
+                { id: 'sessions' as const, label: t('profile.sessionsTab'), icon: Monitor },
               ] as const
             ).map(({ id, label, icon: Icon }) => (
               <button
@@ -274,18 +279,14 @@ export default function Profile() {
             <Panel className="p-5 md:p-6">
               {profileSaved && (
                 <SuccessBanner className="mb-4">
-                  Profil saqlandi. Endi{' '}
-                  <Link to={nextPath} className="font-semibold underline">
-                    {isBusiness ? 'kampaniya' : 'agent'}
-                  </Link>{' '}
-                  qo‘shishingiz mumkin.
+                  {t('profile.saveSuccessDesc', { type: isBusiness ? t('profile.campaign') : t('profile.agent') })}
                 </SuccessBanner>
               )}
 
               <form onSubmit={handleSaveProfile} className="space-y-4">
                 {profileError && <Alert>{profileError}</Alert>}
 
-                <FormField label="Ism" hint="Kabinetda ko‘rinadi">
+                <FormField label={t('profile.nameLabel')} hint={t('profile.nameHint')}>
                   <input
                     value={displayName}
                     onChange={(e) => {
@@ -299,7 +300,7 @@ export default function Profile() {
                 </FormField>
 
                 {isBusiness && (
-                  <FormField label="Kompaniya" hint="AI reklama matnida ishlatiladi">
+                  <FormField label={t('profile.companyLabel')} hint={t('profile.companyHint')}>
                     <div className="relative">
                       <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
                       <input
@@ -316,7 +317,7 @@ export default function Profile() {
                   </FormField>
                 )}
 
-                <FormField label="Telefon" hint="Ixtiyoriy">
+                <FormField label={t('profile.phoneLabel')} hint={t('profile.phoneHint')}>
                   <div className="relative">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--color-text-muted)]" />
                     <input
@@ -340,13 +341,13 @@ export default function Profile() {
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Saqlash
+                    {t('profile.saveBtn')}
                   </AppButton>
                   <Link
                     to="/"
                     className="inline-flex items-center justify-center min-h-12 px-4 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)]"
                   >
-                    Bekor qilish
+                    {t('profile.cancelBtn')}
                   </Link>
                 </div>
               </form>
@@ -356,11 +357,11 @@ export default function Profile() {
           {tab === 'password' && (
             <Panel className="p-5 md:p-6">
               <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-                Parolni o‘zgartirgach, boshqa qurilmalarda qayta kirishingiz kerak bo‘lishi mumkin.
+                {t('profile.passwordNote')}
               </p>
               <form onSubmit={handleChangePassword} className="space-y-4">
                 {passwordError && <Alert>{passwordError}</Alert>}
-                <FormField label="Joriy parol">
+                <FormField label={t('profile.currentPasswordLabel')}>
                   <input
                     type="password"
                     required
@@ -371,7 +372,7 @@ export default function Profile() {
                   />
                 </FormField>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <FormField label="Yangi parol" hint="Kamida 6 belgi">
+                  <FormField label={t('profile.newPasswordLabel')} hint={t('profile.newPasswordHint')}>
                     <input
                       type="password"
                       required
@@ -382,7 +383,7 @@ export default function Profile() {
                       className={inputClassName}
                     />
                   </FormField>
-                  <FormField label="Tasdiqlash">
+                  <FormField label={t('profile.confirmPasswordLabel')}>
                     <input
                       type="password"
                       required
@@ -399,7 +400,7 @@ export default function Profile() {
                   ) : (
                     <Lock className="w-4 h-4" />
                   )}
-                  Parolni yangilash
+                  {t('profile.updatePasswordBtn')}
                 </AppButton>
               </form>
             </Panel>
@@ -408,16 +409,16 @@ export default function Profile() {
           {tab === 'sessions' && (
             <Panel className="p-5 md:p-6">
               <p className="text-sm text-[var(--color-text-secondary)] mb-4 leading-relaxed">
-                Faol qurilmalar. Boshqa joylardan chiqish uchun barcha sessiyalarni bekor qiling.
+                {t('profile.sessionsNote')}
               </p>
               {sessionsLoading ? (
-                <div className="flex justify-center py-8" role="status" aria-label="Qurilmalar yuklanmoqda">
+                <div className="flex justify-center py-8" role="status" aria-label={t('profile.loadingSessions')}>
                   <Loader2 className="w-6 h-6 animate-spin text-[var(--color-primary)]" />
-                  <span className="sr-only">Qurilmalar yuklanmoqda</span>
+                  <span className="sr-only">{t('profile.loadingSessions')}</span>
                 </div>
               ) : sessions.length === 0 ? (
                 <p className="text-sm text-[var(--color-text-muted)]">
-                  Boshqa faol qurilmalar yo‘q — faqat joriy brauzer sessiyasi
+                  {t('profile.noOtherSessions')}
                 </p>
               ) : (
                 <ul className="space-y-3">
@@ -431,13 +432,12 @@ export default function Profile() {
                           {s.label}
                           {s.current && (
                             <span className="ml-2 text-xs font-medium text-[var(--color-primary)]">
-                              (joriy)
+                              {t('profile.currentSession')}
                             </span>
                           )}
                         </p>
                         <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                          {s.ip || 'IP noma’lum'} · oxirgi:{' '}
-                          {new Date(s.last_used_at).toLocaleString('uz-UZ')}
+                          {s.ip || t('profile.unknownIp')} · {t('profile.lastUsed', { date: new Date(s.last_used_at).toLocaleString(i18n.language) })}
                         </p>
                       </div>
                       {!s.current && (
@@ -447,7 +447,7 @@ export default function Profile() {
                           className="text-sm"
                           onClick={() => handleRevokeSession(s.id)}
                         >
-                          Chiqarish
+                          {t('profile.revokeBtn')}
                         </AppButton>
                       )}
                     </li>
@@ -461,9 +461,57 @@ export default function Profile() {
                   className="mt-4 w-full sm:w-auto"
                   onClick={handleRevokeAllSessions}
                 >
-                  Boshqa barcha sessiyalarni bekor qilish
+                  {t('profile.revokeAllBtn')}
                 </AppButton>
               )}
+            </Panel>
+          )}
+
+          {tab === 'settings' && (
+            <Panel className="p-5 md:p-6">
+              <h3 className="text-lg font-bold text-[var(--color-text)] mb-4 flex items-center gap-2">
+                <Settings className="w-5 h-5 text-[var(--color-primary)]" />
+                {t('profile.settingsTitle')}
+              </h3>
+              <div className="space-y-6">
+                <FormField 
+                  label={t('profile.currencyLabel')} 
+                  hint={t('profile.currencyHint')}
+                >
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {(['UZS', 'USD', 'EUR', 'RUB'] as Currency[]).map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => {
+                           setCurrency(c);
+                           toast.success(t('profile.currencyChangeSuccess', { currency: c }));
+                        }}
+                        className={cn(
+                          'flex flex-col items-center justify-center gap-1.5 p-4 rounded-[var(--radius-lg)] border transition-all duration-200',
+                          currency === c
+                            ? 'border-[var(--color-primary)] bg-[var(--color-primary-subtle)] text-[var(--color-primary)] shadow-[var(--shadow-sm)]'
+                            : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)]'
+                        )}
+                      >
+                        <span className="text-sm font-bold">{c === 'UZS' ? t('common.currencySymbol') : c}</span>
+                        <span className="text-[10px] opacity-70 uppercase">{t(`profile.currencyNames.${c}`)}</span>
+                      </button>
+                    ))}
+                  </div>
+                </FormField>
+
+                <div className="pt-4 border-t border-[var(--color-border)]">
+                   <div className="flex items-start gap-3 p-4 rounded-[var(--radius-lg)] bg-[var(--color-bg-subtle)]">
+                      <Coins className="w-5 h-5 text-[var(--color-primary)] shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--color-text)]">{t('profile.currencyDisclaimerTitle')}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mt-1">
+                          {t('profile.currencyDisclaimerDesc')}
+                        </p>
+                      </div>
+                   </div>
+                </div>
+              </div>
             </Panel>
           )}
         </div>

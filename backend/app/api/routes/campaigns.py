@@ -22,8 +22,9 @@ from app.services.offerings import merge_keywords_from_offerings, normalize_offe
 from app.services.vector_store import delete_campaign as delete_vector
 from app.services.vector_store import sync_campaign_by_id
 from app.services.wallet import WalletError, allocate_on_campaign_create
+from app.utils.response import AppResponse, AppException
 
-router = APIRouter(prefix="/api", tags=["campaigns"])
+router = APIRouter(prefix="/api/campaigns", tags=["campaigns"])
 
 
 class ResearchBody(BaseModel):
@@ -58,16 +59,13 @@ class StatusBody(BaseModel):
 async def _owner_campaign(campaign_id: str, user_id: str) -> dict:
     c = await get_db().campaigns.find_one({"_id": oid(campaign_id), "owner_id": oid(user_id)})
     if not c:
-        raise HTTPException(404, "Kampaniya topilmadi")
+        raise AppException("campaigns.not_found", http_status=404)
     return c
 
 
-@router.get("/categories")
-async def categories():
-    return get_category_options()
 
 
-@router.post("/campaigns/profile-preview")
+@router.post("/profile-preview")
 async def profile_preview(body: dict[str, Any], user: Annotated[AuthUser, Depends(require_business)]):
     data = dict(body)
     if data.get("offerings"):
@@ -75,65 +73,70 @@ async def profile_preview(body: dict[str, Any], user: Annotated[AuthUser, Depend
     if isinstance(data.get("keywords"), str):
         data["keywords"] = [k.strip() for k in data["keywords"].split(",") if k.strip()]
     text = build_campaign_profile_text(data)
-    return {"profile_text": text, "length": len(text), "has_embedding_service": bool(settings.github_token)}
+    return AppResponse.success({"profile_text": text, "length": len(text), "has_embedding_service": bool(settings.github_token)})
 
 
-@router.get("/campaigns/{campaign_id}/profile")
+@router.get("/{campaign_id}/profile")
 async def campaign_profile(campaign_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     c = await _owner_campaign(campaign_id, user.id)
     c.pop("embedding", None)
     text = build_campaign_profile_text(c)
     emb = await get_db().campaigns.find_one({"_id": c["_id"]}, {"embedding": 1})
     dims = len(emb.get("embedding") or []) if emb else 0
-    return {"profile_text": text, "length": len(text), "embedding_dimensions": dims, "updatedAt": c.get("updatedAt")}
+    return AppResponse.success({
+        "profile_text": text,
+        "length": len(text),
+        "embedding_dimensions": dims,
+        "updatedAt": c.get("updatedAt")
+    })
 
 
-@router.post("/campaigns/research")
+@router.post("/research")
 async def campaign_research(body: ResearchBody, user: Annotated[AuthUser, Depends(require_business)]):
     if not body.brand_url.startswith(("http://", "https://")):
-        raise HTTPException(400, "To‘g‘ri brand URL kiriting (https://...)")
+        raise AppException("campaigns.invalid_url", http_status=400)
     result = await research_campaign(brand_url=body.brand_url, name=body.name or "", category=body.category or "", brief=body.brief or "")
     if result.get("error"):
-        raise HTTPException(503, result["error"])
+        raise AppException("campaigns.research_failed", http_status=503, message=result["error"])
     return result
 
 
-@router.get("/campaigns")
+@router.get("")
 async def list_campaigns(user: Annotated[AuthUser, Depends(get_current_user)]):
     filt = {"owner_id": oid(user.id)} if user.role == "business" else {}
     cursor = get_db().campaigns.find(filt, {"embedding": 0}).sort("createdAt", -1)
     rows = []
     async for c in cursor:
         rows.append(serialize_doc(c))
-    return rows
+    return AppResponse.success(rows)
 
 
-@router.get("/campaigns/{campaign_id}")
+@router.get("/{campaign_id}")
 async def get_campaign(campaign_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     c = await _owner_campaign(campaign_id, user.id)
     c.pop("embedding", None)
-    return serialize_doc(c)
+    return AppResponse.success(serialize_doc(c))
 
 
-@router.patch("/campaigns/{campaign_id}/status")
+@router.patch("/{campaign_id}/status")
 async def set_status(campaign_id: str, body: StatusBody, user: Annotated[AuthUser, Depends(require_business)]):
     active = 1 if body.active in (1, True) else 0
     c = await _owner_campaign(campaign_id, user.id)
     await get_db().campaigns.update_one({"_id": c["_id"]}, {"$set": {"active": active}})
     await sync_campaign_by_id(campaign_id)
     await reload_campaign_cache_bg()
-    return {"_id": str(c["_id"]), "active": active}
+    return AppResponse.success({"_id": str(c["_id"]), "active": active}, status_code="campaigns.status_updated")
 
 
-@router.post("/campaigns")
+@router.post("")
 async def create_campaign(body: CampaignCreateBody, user: Annotated[AuthUser, Depends(require_business)]):
     if body.category == OTHER_CATEGORY_ID and not (body.custom_category or "").strip():
-        raise HTTPException(400, "«Boshqa» tanlaganda kategoriya nomini yozing")
+        raise AppException("campaigns.custom_category_required", http_status=400)
 
     offerings = normalize_offerings(body.offerings)
     kw = merge_keywords_from_offerings(body.keywords or [], offerings)
     if not kw:
-        raise HTTPException(400, "Kamida bitta kalit so‘z yoki mahsulot/xizmat nomi kerak")
+        raise AppException("campaigns.missing_keywords", http_status=400)
 
     sub = body.subcategory or default_subcategory(body.category)
     campaign_data = {
@@ -188,12 +191,12 @@ async def create_campaign(body: CampaignCreateBody, user: Annotated[AuthUser, De
         doc["_id"] = result.inserted_id
         await sync_campaign_by_id(cid)
         await reload_campaign_cache_bg()
-        return {"id": doc["tracking_code"], "_id": cid}
+        return AppResponse.success({"id": doc["tracking_code"], "_id": cid}, status_code="campaigns.created")
     except WalletError as err:
-        raise HTTPException(err.status, err.message, headers={"X-Error-Code": err.code} if err.code else None)
+        raise AppException("wallet.allocate_failed", http_status=err.status, message=err.message)
 
 
-@router.put("/campaigns/{campaign_id}")
+@router.put("/{campaign_id}")
 async def update_campaign(campaign_id: str, body: dict[str, Any], user: Annotated[AuthUser, Depends(get_current_user)]):
     c = await _owner_campaign(campaign_id, user.id)
     fields = [
@@ -225,27 +228,27 @@ async def update_campaign(campaign_id: str, body: dict[str, Any], user: Annotate
     row = await get_db().campaigns.find_one({"_id": c["_id"]})
     await sync_campaign_by_id(campaign_id)
     await reload_campaign_cache_bg()
-    return serialize_doc(row)
+    return AppResponse.success(serialize_doc(row), status_code="campaigns.updated")
 
 
-@router.post("/campaigns/{campaign_id}/refresh-embedding")
+@router.post("/{campaign_id}/refresh-embedding")
 async def refresh_embedding(campaign_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     c = await _owner_campaign(campaign_id, user.id)
     if not settings.github_token:
-        raise HTTPException(500, "Embedding xizmati ulanmagan (GITHUB_TOKEN yo‘q)")
+        raise AppException("campaigns.embedding_service_unavailable", http_status=503)
     text = build_campaign_profile_text(c)
     emb = await embed_text(text)
     await get_db().campaigns.update_one({"_id": c["_id"]}, {"$set": {"embedding": emb or []}})
     await sync_campaign_by_id(campaign_id)
     await reload_campaign_cache_bg()
-    return {"success": True, "text_used": text}
+    return AppResponse.success({"text_used": text})
 
 
-@router.delete("/campaigns/{campaign_id}")
+@router.delete("/{campaign_id}")
 async def delete_campaign(campaign_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     result = await get_db().campaigns.delete_one({"_id": oid(campaign_id), "owner_id": oid(user.id)})
     if result.deleted_count == 0:
-        raise HTTPException(404, "Kampaniya topilmadi yoki ruxsat yo‘q")
+        raise AppException("campaigns.not_found", http_status=404)
     await delete_vector(campaign_id)
     await reload_campaign_cache_bg()
-    return {"success": True}
+    return AppResponse.success(None)

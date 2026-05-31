@@ -8,6 +8,7 @@ from app.core.auth import generate_api_key, hash_api_key
 from app.core.bson_utils import oid, serialize_doc, serialize_many
 from app.core.deps import AuthUser, get_current_user, require_agent, require_business
 from app.db.mongo import get_db
+from app.utils.response import AppResponse, AppException
 from app.services.campaign_cache import increment_campaign_impression, reload_campaign_cache_bg
 from app.services.conversation import build_matching_prompt
 from app.services.matcher import find_best_campaign
@@ -20,7 +21,7 @@ from app.services.suggestion import (
     is_campaign_serve_ready,
 )
 
-router = APIRouter(tags=["agents"])
+router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 
 class SendResultBody(BaseModel):
@@ -68,7 +69,7 @@ def _latest_prompt(body: SendResultBody) -> str | None:
     return None
 
 
-@router.post("/authorized/send_result")
+@router.post("/send_result")
 async def send_result(request: Request, body: SendResultBody, bg: BackgroundTasks):
     agent = await _resolve_agent(request, body)
     if not agent:
@@ -138,11 +139,11 @@ async def send_result(request: Request, body: SendResultBody, bg: BackgroundTask
         return {"match": False}
 
 
-@router.post("/api/agents/register")
+@router.post("/register")
 async def register_agent(body: RegisterAgentBody, user: Annotated[AuthUser, Depends(require_agent)]):
     db = get_db()
     if await db.agents.find_one({"username": body.username}):
-        raise HTTPException(400, "Bu foydalanuvchi nomi band")
+        raise AppException("agents.username_taken", http_status=400)
     api_key = generate_api_key()
     now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
     await db.agents.insert_one(
@@ -160,10 +161,11 @@ async def register_agent(body: RegisterAgentBody, user: Annotated[AuthUser, Depe
             "updatedAt": now,
         }
     )
-    return {"message": "Agent ro‘yxatdan o‘tdi. API kalitini saqlang — keyin ko‘rsatilmaydi.", "api_key": api_key}
+    return AppResponse.success({"api_key": api_key}, status_code="agents.registered")
 
 
-@router.get("/api/agents")
+@router.get("", include_in_schema=False)
+@router.get("/")
 async def list_agents(user: Annotated[AuthUser, Depends(get_current_user)]):
     db = get_db()
     filt = {"owner_id": oid(user.id)} if user.role == "agent" else {}
@@ -172,33 +174,33 @@ async def list_agents(user: Annotated[AuthUser, Depends(get_current_user)]):
     async for a in cursor:
         a.pop("api_key_hash", None)
         agents.append(serialize_doc(a))
-    return agents
+    return AppResponse.success(agents)
 
 
-@router.patch("/api/agents/{agent_id}")
+@router.patch("/{agent_id}")
 async def patch_agent(agent_id: str, body: PatchAgentBody, user: Annotated[AuthUser, Depends(get_current_user)]):
     db = get_db()
     agent = await db.agents.find_one({"_id": oid(agent_id), "owner_id": oid(user.id)})
     if not agent:
-        raise HTTPException(404, "Agent topilmadi")
+        raise AppException("agents.not_found", http_status=404)
     updates = {}
     if body.active is not None:
         updates["active"] = bool(body.active)
     if body.username is not None:
         taken = await db.agents.find_one({"username": body.username, "_id": {"$ne": agent["_id"]}})
         if taken:
-            raise HTTPException(400, "Bu foydalanuvchi nomi band")
+            raise AppException("agents.username_taken", http_status=400)
         updates["username"] = body.username
     if updates:
         await db.agents.update_one({"_id": agent["_id"]}, {"$set": updates})
     row = await db.agents.find_one({"_id": agent["_id"]})
     row.pop("api_key_hash", None)
-    return serialize_doc(row)
+    return AppResponse.success(serialize_doc(row))
 
 
-@router.delete("/api/agents/{agent_id}")
+@router.delete("/{agent_id}")
 async def delete_agent(agent_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     result = await get_db().agents.delete_one({"_id": oid(agent_id), "owner_id": oid(user.id)})
     if result.deleted_count == 0:
-        raise HTTPException(404, "Agent topilmadi")
-    return {"success": True}
+        raise AppException("agents.not_found", http_status=404)
+    return AppResponse.success(None)

@@ -281,7 +281,7 @@ def build_campaign_profile_text(campaign: dict) -> str:
 
     subcat_def = cat_def["subcategories"].get(campaign.get("subcategory") or "") if cat_def else None
     subcat_label = subcat_def["label"] if subcat_def else ("" if campaign.get("subcategory") == OTHER_SUBCATEGORY_ID else campaign.get("subcategory"))
-    sub_signals = (subcat_def or {}).get("signals", [])[:12]
+    sub_signals = (subcat_def or {}).get("signals", [])[:15]
 
     offerings = campaign.get("offerings") or []
     offering_text = ""
@@ -294,17 +294,22 @@ def build_campaign_profile_text(campaign: dict) -> str:
             parts.append(f"{o.get('name')} [{kind}]{price}{kw}")
         offering_text = "; ".join(parts)
 
+    # Building a rich semantic profile for high-quality vector matching
     chunks = [
-        f"Brend: {campaign.get('name')}",
-        f"Kategoriya: {cat_label}" if cat_label else "",
-        f"Subkategoriya: {subcat_label}" if subcat_label else "",
-        f"Shior: {campaign.get('tagline')}" if campaign.get("tagline") else "",
-        campaign.get("description") or "",
-        f"Ohang: {campaign.get('tone')}" if campaign.get("tone") else "",
-        f"Kalit so'zlar: {', '.join(campaign.get('keywords') or [])}" if campaign.get("keywords") else "",
-        f"Niche: {', '.join(campaign.get('niche_keywords') or [])}" if campaign.get("niche_keywords") else "",
-        f"Mahsulot va xizmatlar: {offering_text}" if offering_text else "",
-        f"Mavzu signallari: {', '.join(sub_signals)}" if sub_signals else "",
-        "O'zbekiston bozori, AI chat va Telegram bot konteksti",
+        f"USAL: {campaign.get('name')}", # Unique Semantic Alias
+        f"SOH: {cat_label} / {subcat_label}".strip(" / "), # Industry/Soha
+        f"SHI: {campaign.get('tagline')}" if campaign.get("tagline") else "", # Tagline/Shior
+        f"IZO: {campaign.get('description')}" if campaign.get("description") else "", # Description/Izoh
+        f"MAV: {', '.join(campaign.get('keywords') or [])}" if campaign.get("keywords") else "", # Keywords/Mavzu
+        f"NIK: {', '.join(campaign.get('niche_keywords') or [])}" if campaign.get("niche_keywords") else "", # Niche/Nik
+        f"MAH: {offering_text}" if offering_text else "", # Products/Services
+        f"OHN: {campaign.get('tone')}" if campaign.get("tone") else "", # Tone/Ohang
+        f"INT: {', '.join(sub_signals)}" if sub_signals else "", # Intent Signals
+        "LOK: O'zbekiston bozori, Toshkent, hududiy kontekst", # Location context
     ]
-    return ". ".join(c for c in chunks if c).strip()
+    
+    # Add a human-readable synthesis for better cross-lingual embedding mapping
+    synthesis = f"{campaign.get('name')} - {cat_label} sohasida faoliyat yuritadi. {campaign.get('tagline') or ''} {campaign.get('description') or ''}"
+    chunks.append(f"SYN: {synthesis.strip()}")
+    
+    return " | ".join(c for c in chunks if c).strip()

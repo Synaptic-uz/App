@@ -3,7 +3,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '/api';
 const AUTH_BASE = import.meta.env.VITE_AUTH_URL || '/authorized';
 
 const NETWORK_ERROR_MSG =
-	'Serverga ulanib bo‘lmadi. `backend` da FastAPI (port 3007) ishlayotganini tekshiring.';
+	'Ilovada xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko‘ring.';
 
 const TOKEN_KEY = 'token';
 const REFRESH_KEY = 'refreshToken';
@@ -37,10 +37,13 @@ export function clearAuthSession() {
 	localStorage.removeItem(USER_KEY);
 }
 
+import i18n from '../i18n';
+
 const getHeaders = () => {
 	const token = getStoredToken();
 	const headers: Record<string, string> = {
 		'Content-Type': 'application/json',
+		'Accept-Language': i18n.language || 'uz',
 	};
 	if (token) headers['Authorization'] = `Bearer ${token}`;
 	return headers;
@@ -60,7 +63,14 @@ function apiRouteMissingHint(status: number, body: string): string | null {
 
 async function parseJsonResponse(res: Response) {
 	const raw = await res.text();
-	let result: { error?: string; code?: string };
+	let result: {
+		status?: string;
+		status_code?: number;
+		message?: string;
+		data?: any;
+		error?: string; // Legacy support for other APIs if any
+		code?: string;
+	};
 	try {
 		result = raw ? JSON.parse(raw) : {};
 	} catch {
@@ -69,19 +79,34 @@ async function parseJsonResponse(res: Response) {
 			hint || (res.ok ? 'Javob o‘qib bo‘lmadi' : NETWORK_ERROR_MSG)
 		);
 	}
-	if (!res.ok) {
+
+	if (res.status === 401) {
+		clearAuthSession();
+		window.location.href = '/login';
+	}
+
+	if (!res.ok || result.status === false) {
 		const hint = apiRouteMissingHint(res.status, raw);
+		
+		const statusCodeKey = typeof result.status_code === 'string' ? result.status_code : null;
+		const translatedMessage = statusCodeKey ? i18n.t(statusCodeKey) : result.message;
+
 		const err = new Error(
-			hint || result.error || 'So‘rov bajarilmadi'
+			hint || translatedMessage || result.error || 'So‘rov bajarilmadi'
 		) as Error & {
 			code?: string;
 			status?: number;
+			data?: any;
 		};
-		err.code = result.code;
-		err.status = res.status;
+		err.code = statusCodeKey || result.code || (result.data?.code as string);
+		err.status = typeof result.status_code === 'number' ? result.status_code : res.status;
+		err.data = result.data;
 		throw err;
 	}
-	return result;
+
+	// For Synaptic API, we return the 'data' part if it exists, 
+	// otherwise return the whole object for compatibility.
+	return result.data !== undefined ? result.data : result;
 }
 
 async function safeFetch(input: RequestInfo | URL, init?: RequestInit) {
@@ -356,7 +381,7 @@ export const api = {
 	},
 
 	getAgents: async () => {
-		const res = await authFetch('/agents');
+		const res = await authFetch('/agents/');
 		return parseJsonResponse(res);
 	},
 	registerAgent: async (data: { username: string; owner_email: string }) => {

@@ -59,6 +59,16 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'agent/:agent_code/analytics',
+        element: (
+          <LazyPage>
+            <ProtectedRoute allowedRoles={['agent']}>
+              <AgentAnalytics />
+            </ProtectedRoute>
+          </LazyPage>
+        ),
+      },
+      {
         path: 'business/analytics',
         element: (
           <LazyPage>

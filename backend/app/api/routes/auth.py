@@ -25,6 +25,7 @@ from app.core.sessions import (
     validate_refresh_for_session,
 )
 from app.db.mongo import get_db, is_db_connected
+from app.utils.response import AppResponse, AppException
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -69,7 +70,7 @@ async def register(body: RegisterBody, request: Request):
     db = get_db()
     existing = await db.users.find_one({"email": body.email.lower()})
     if existing:
-        raise HTTPException(400, "Bu email allaqachon ro‘yxatdan o‘tgan")
+        raise AppException("auth.email_already_registered", http_status=400)
 
     wallet_seed = settings.initial_wallet_balance if body.role == "business" else 0
     now = datetime.now(timezone.utc)
@@ -88,11 +89,12 @@ async def register(body: RegisterBody, request: Request):
     result = await db.users.insert_one(doc)
     doc["_id"] = result.inserted_id
     try:
-        return await _issue_login(doc, request)
+        data = await _issue_login(doc, request)
+        return AppResponse.success(data)
     except Exception:
         if not is_db_connected():
-            raise HTTPException(503, "Ma’lumotlar bazasiga ulanib bo‘lmadi. Serverni qayta ishga tushiring.")
-        raise HTTPException(500, "Ro‘yxatdan o‘tish muvaffaqiyatsiz")
+            raise AppException("error.db_connection_failed", http_status=503)
+        raise AppException("auth.registration_failed", http_status=500)
 
 
 @router.post("/login")
@@ -100,8 +102,9 @@ async def login(body: LoginBody, request: Request):
     db = get_db()
     user = await db.users.find_one({"email": body.email.lower()})
     if not user or not verify_password(body.password, user["password"]):
-        raise HTTPException(400, "Email yoki parol noto‘g‘ri")
-    return await _issue_login(user, request)
+        raise AppException("auth.invalid_credentials", http_status=401)
+    data = await _issue_login(user, request)
+    return AppResponse.success(data)
 
 
 @router.get("/me")
@@ -109,9 +112,9 @@ async def me(user: Annotated[AuthUser, Depends(get_current_user)]):
     db = get_db()
     row = await db.users.find_one({"_id": oid(user.id)}, {"password": 0, "refresh_token_hash": 0})
     if not row:
-        raise HTTPException(404, "Foydalanuvchi topilmadi")
+        raise AppException("auth.user_not_found", http_status=404)
     stats = await get_account_stats(user.id, user.role)
-    return {"user": serialize_user(row), "stats": stats}
+    return AppResponse.success({"user": serialize_user(row), "stats": stats})
 
 
 async def _update_profile(user: AuthUser, body: ProfileBody):
@@ -134,39 +137,41 @@ async def _update_profile(user: AuthUser, body: ProfileBody):
 @router.put("/profile")
 async def update_profile(body: ProfileBody, user: Annotated[AuthUser, Depends(get_current_user)]):
     try:
-        return await _update_profile(user, body)
+        data = await _update_profile(user, body)
+        return AppResponse.success(data)
     except Exception:
-        raise HTTPException(500, "Profil yangilanmadi")
+        raise AppException("auth.profile_update_failed", http_status=500)
 
 
 @router.patch("/password")
 @router.put("/password")
 async def change_password(body: PasswordBody, request: Request, user: Annotated[AuthUser, Depends(get_current_user)]):
     if len(body.new_password) < 6:
-        raise HTTPException(400, "Yangi parol kamida 6 belgidan iborat bo‘lishi kerak")
+        raise AppException("password_too_short", status_code=400)
     db = get_db()
     row = await db.users.find_one({"_id": oid(user.id)})
     if not row or not verify_password(body.current_password, row["password"]):
-        raise HTTPException(400, "Joriy parol noto‘g‘ri")
+        raise AppException("auth.current_password_incorrect", http_status=401)
     await db.users.update_one({"_id": row["_id"]}, {"$set": {"password": hash_password(body.new_password)}})
     await revoke_all_auth_sessions(user.id)
     row = await db.users.find_one({"_id": row["_id"]})
-    return await _issue_login(row, request)
+    data = await _issue_login(row, request)
+    return AppResponse.success(data)
 
 
 @router.post("/refresh")
 async def refresh(body: RefreshBody):
     if not body.refreshToken:
-        raise HTTPException(400, "Refresh token talab qilinadi")
+        raise AppException("auth.refresh_token_required", http_status=400)
     try:
         payload = verify_refresh_token(body.refreshToken)
     except jwt.PyJWTError:
-        raise HTTPException(403, detail="Refresh token muddati tugagan", headers={"X-Error-Code": "REFRESH_EXPIRED"})
+        raise AppException("auth.refresh_token_expired", http_status=403)
 
     db = get_db()
     user = await db.users.find_one({"_id": oid(payload["id"])})
     if not user:
-        raise HTTPException(403, "Foydalanuvchi topilmadi")
+        raise AppException("auth.user_not_found", http_status=403)
 
     sid = payload.get("sid")
     valid = False
@@ -179,7 +184,7 @@ async def refresh(body: RefreshBody):
             sid = new_session_id()
 
     if not valid:
-        raise HTTPException(403, detail="Refresh token yaroqsiz", headers={"X-Error-Code": "REFRESH_EXPIRED"})
+        raise AppException("auth.refresh_token_invalid", http_status=403)
 
     pair = issue_auth_pair(user, sid)
     if payload.get("sid"):
@@ -187,7 +192,7 @@ async def refresh(body: RefreshBody):
     else:
         await create_auth_session(str(user["_id"]), pair["refreshToken"], {}, sid)
     await db.users.update_one({"_id": user["_id"]}, {"$set": {"refresh_token_hash": None}})
-    return pair
+    return AppResponse.success(pair)
 
 
 @router.post("/logout")
@@ -196,23 +201,24 @@ async def logout(user: Annotated[AuthUser, Depends(get_current_user)]):
         await revoke_auth_session(user.sid, user.id)
     else:
         await get_db().users.update_one({"_id": oid(user.id)}, {"$set": {"refresh_token_hash": None}})
-    return {"ok": True}
+    return AppResponse.success(None)
 
 
 @router.get("/sessions")
 async def sessions(user: Annotated[AuthUser, Depends(get_current_user)]):
-    return {"sessions": await list_auth_sessions(user.id, user.sid)}
+    data = await list_auth_sessions(user.id, user.sid)
+    return AppResponse.success({"sessions": data})
 
 
 @router.delete("/sessions/{session_id}")
 async def revoke_session(session_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     if session_id == user.sid:
-        raise HTTPException(400, "Joriy sessiyani bu yerda emas, chiqish tugmasidan foydalaning")
+        raise AppException("auth.session_revoke_current_error", http_status=400)
     await revoke_auth_session(session_id, user.id)
-    return {"ok": True}
+    return AppResponse.success(None)
 
 
 @router.post("/sessions/revoke-all")
 async def revoke_all(user: Annotated[AuthUser, Depends(get_current_user)]):
     await revoke_all_auth_sessions(user.id, user.sid)
-    return {"ok": True}
+    return AppResponse.success(None)

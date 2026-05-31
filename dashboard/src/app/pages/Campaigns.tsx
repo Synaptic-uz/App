@@ -28,8 +28,9 @@ import {
 } from '../components/design';
 import { CampaignForm } from '../components/design/CampaignForm';
 import { emptyCampaignForm, type CampaignFormState } from '../../lib/campaignFormDefaults';
-import { WalletPanel } from '../components/design/WalletPanel';
 import { offeringsFromApi, offeringsToApi } from '../../lib/campaignOfferings';
+import { useCurrency } from '../context/CurrencyContext';
+import { WalletPanel } from '../components/design/WalletPanel';
 
 function campaignToForm(camp: any): CampaignFormState {
   return {
@@ -53,6 +54,7 @@ function campaignToForm(camp: any): CampaignFormState {
 
 export default function Campaigns() {
   const { t } = useTranslation();
+  const { format } = useCurrency();
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [categories, setCategories] = useState<CategoryOption[]>(FALLBACK_CATEGORIES);
   const [loading, setLoading] = useState(true);
@@ -345,8 +347,7 @@ export default function Campaigns() {
         <div className="synaptic-card text-center max-w-lg mx-auto">
           <p className="text-lg font-semibold text-[var(--color-text)] mb-2">{t('campaigns.firstCampaign')}</p>
           <p className="text-sm text-[var(--color-text-secondary)] mb-6 leading-relaxed">
-            Brend sayti va mahsulotlarni kiriting — AI kalit so‘zlar, shior va auditoriyani avtomatik
-            to‘ldiradi.
+            {t('campaigns.onboardingDesc')}
           </p>
           <AppButton onClick={() => setDialogOpen(true)} className="gap-2 min-h-12 px-8">
             <Plus className="w-5 h-5" />
@@ -365,15 +366,15 @@ export default function Campaigns() {
                 camp.subcategory && camp.category !== 'other'
                   ? getSubcategoryLabel(camp.category, camp.subcategory)
                   : '';
+
               return (
                 <DataCard
                   key={camp._id}
                   title={camp.name}
-                  subtitle={camp.tagline}
                   meta={
                     camp.tracking_code
-                      ? `${(camp.budget / 1000).toLocaleString()} ${t('common.thousandUzs')} · /t/${camp.tracking_code}`
-                      : `${(camp.budget / 1000).toLocaleString()} ${t('common.thousandUzs')}`
+                      ? `${format(camp.budget)} · /t/${camp.tracking_code}`
+                      : format(camp.budget)
                   }
                   badges={
                     <>
@@ -410,8 +411,8 @@ export default function Campaigns() {
                 <tr>
                   <th className="p-4 font-semibold text-[var(--color-text-muted)]">{t('campaigns.name')}</th>
                   <th className="p-4 font-semibold text-[var(--color-text-muted)] text-center">{t('common.status')}</th>
-                  <th className="p-4 font-semibold text-[var(--color-text-muted)]">Kategoriya</th>
-                  <th className="p-4 font-semibold text-[var(--color-text-muted)] text-right">Byudjet</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)]">{t('campaigns.category')}</th>
+                  <th className="p-4 font-semibold text-[var(--color-text-muted)] text-right">{t('campaigns.budget')}</th>
                   <th className="p-4 font-semibold text-[var(--color-text-muted)] text-center">{t('common.actions')}</th>
                 </tr>
               </thead>
@@ -430,15 +431,15 @@ export default function Campaigns() {
                       key={camp._id}
                       className="border-b border-[var(--color-border)] last:border-0 hover:bg-[var(--color-bg-subtle)]/80 transition-colors"
                     >
-                      <td className="p-4">
-                        <p className="font-semibold text-[var(--color-text)]">{camp.name}</p>
-                        <p className="text-xs text-[var(--color-text-secondary)] line-clamp-1 mt-0.5">
+                      <td className="p-4 max-w-[200px]">
+                        <p className="font-semibold text-[var(--color-text)] truncate">{camp.name}</p>
+                        <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5" title={camp.tagline}>
                           {camp.tagline}
                         </p>
                         {camp.keywords?.length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {camp.keywords.slice(0, 4).map((kw: string) => (
-                              <Badge key={kw} variant="primary">
+                            {camp.keywords.slice(0, 3).map((kw: string) => (
+                              <Badge key={kw} variant="primary" className="truncate max-w-[80px]">
                                 {kw}
                               </Badge>
                             ))}
@@ -452,14 +453,14 @@ export default function Campaigns() {
                           <Badge variant="danger">{t('campaigns.paused')}</Badge>
                         )}
                       </td>
-                      <td className="p-4">
-                        <Badge variant="neutral">
+                      <td className="p-4 max-w-[150px]">
+                        <Badge variant="neutral" className="truncate">
                           {catLabel}
                           {subLabel ? ` / ${subLabel}` : ''}
                         </Badge>
                       </td>
-                      <td className="p-4 text-right tabular-nums text-[var(--color-text)]">
-                        {(camp.budget / 1000).toLocaleString('uz-UZ')} ming so‘m
+                      <td className="p-4 text-right tabular-nums text-[var(--color-text)] max-w-[120px] truncate" title={camp.budget.toString()}>
+                        {format(camp.budget)}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center justify-center gap-1">{renderActions(camp)}</div>

@@ -1,11 +1,12 @@
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.services.enrichment import enrich_response
+from app.utils.response import AppResponse, AppException
 
-router = APIRouter(prefix="/api", tags=["enrich"])
+router = APIRouter(prefix="/api/enrich", tags=["enrich"])
 
 
 class EnrichBody(BaseModel):
@@ -16,10 +17,10 @@ class EnrichBody(BaseModel):
     parse_mode: str = "Markdown"
 
 
-@router.post("/enrich")
+@router.post("")
 async def enrich(body: EnrichBody):
     if not body.prompt:
-        raise HTTPException(400, "Prompt is required")
+        raise AppException("enrich.prompt_required", http_status=400)
     try:
         result = await enrich_response(
             body.prompt,
@@ -28,6 +29,6 @@ async def enrich(body: EnrichBody):
             messages=body.messages or [],
             parse_mode=body.parse_mode,
         )
-        return {**result, "parse_mode": body.parse_mode}
+        return AppResponse.success({**result, "parse_mode": body.parse_mode})
     except Exception:
-        raise HTTPException(500, "Failed to enrich response")
+        raise AppException("enrich.failed", http_status=500)

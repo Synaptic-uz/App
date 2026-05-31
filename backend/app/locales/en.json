@@ -1,0 +1,21 @@
+{
+  "email_already_registered": "This email is already registered",
+  "db_connection_failed": "Unable to connect to database. Please restart the server.",
+  "registration_failed": "Registration failed",
+  "invalid_credentials": "Email or password incorrect",
+  "user_not_found": "User not found",
+  "profile_update_failed": "Profile update failed",
+  "password_too_short": "New password must be at least 6 characters long",
+  "current_password_incorrect": "Current password incorrect",
+  "refresh_token_required": "Refresh token required",
+  "refresh_token_expired": "Refresh token expired",
+  "refresh_token_invalid": "Refresh token invalid",
+  "logout_success": "Logout successful",
+  "session_revoke_current_error": "Do not revoke current session here, use the logout button",
+  "success": "Success",
+  "error": "Error",
+  "username_taken": "This username is taken",
+  "agent_not_found": "Agent not found",
+  "agent_registered": "Agent registered. Save the API key — it will not be shown again.",
+  "deposit_test_mode_only": "Deposit is currently only in test mode (ALLOW_MOCK_DEPOSIT=1)"
+}

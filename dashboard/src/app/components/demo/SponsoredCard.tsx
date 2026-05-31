@@ -6,6 +6,7 @@ type Props = {
   categoryLabel?: string;
   trackingUrl: string;
   ctaLabel: string;
+  label: string;
 };
 
 export function SponsoredCard({
@@ -14,13 +15,14 @@ export function SponsoredCard({
   categoryLabel,
   trackingUrl,
   ctaLabel,
+  label,
 }: Props) {
   return (
     <div className="mt-3 overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-primary)]/25 bg-gradient-to-br from-[var(--color-icon-bg)] to-white shadow-[var(--shadow-sm)]">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-primary)]/10 bg-[var(--color-primary)]/[0.04]">
         <span className="inline-flex items-center gap-1 rounded-[var(--radius-full)] bg-[var(--color-primary)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
           <Sparkles className="w-3 h-3" />
-          Reklama
+          {label}
         </span>
         {categoryLabel && (
           <span className="text-[11px] font-medium text-[var(--color-text-muted)] truncate">

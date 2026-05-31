@@ -1,6 +1,7 @@
 import { Plus, Trash2, Package, Wrench } from 'lucide-react';
 import type { CampaignOffering } from '../../../lib/campaignOfferings';
 import { newOffering } from '../../../lib/campaignOfferings';
+import { useTranslation } from 'react-i18next';
 import { FormField, inputClassName, selectClassName, textareaClassName, AppButton } from './index';
 import { cn } from '../ui/utils';
 
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disabled }: Props) {
+  const { t } = useTranslation();
+
   function update(id: string, patch: Partial<CampaignOffering>) {
     onChange(offerings.map((o) => (o.clientId === id ? { ...o, ...patch } : o)));
   }
@@ -34,9 +37,9 @@ export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disable
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-[var(--color-text)]">Mahsulotlar va xizmatlar</p>
+          <p className="text-sm font-semibold text-[var(--color-text)]">{t('offerings.title')}</p>
           <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-            Qo‘lda qo‘shing yoki AI tadqiqotdan to‘ldiring (Uzumdagi aniq mahsulot/do‘kon uchun alohida qator).
+            {t('offerings.desc')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -49,7 +52,7 @@ export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disable
             onClick={() => add('product')}
           >
             <Package className="w-4 h-4" />
-            Mahsulot
+            {t('offerings.product')}
           </AppButton>
           <AppButton
             type="button"
@@ -60,14 +63,14 @@ export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disable
             onClick={() => add('service')}
           >
             <Wrench className="w-4 h-4" />
-            Xizmat
+            {t('offerings.service')}
           </AppButton>
         </div>
       </div>
 
       {offerings.length === 0 ? (
         <div className="rounded-[var(--radius-md)] border border-dashed border-[var(--color-border-strong)] p-6 text-center text-sm text-[var(--color-text-secondary)]">
-          Hali mahsulot yoki xizmat qo‘shilmagan
+          {t('offerings.empty')}
         </div>
       ) : (
         <div className="space-y-3">
@@ -83,11 +86,11 @@ export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disable
                     o.type === 'service' ? 'text-[var(--color-accent)]' : 'text-[var(--color-primary)]'
                   )}
                 >
-                  {o.type === 'service' ? 'Xizmat' : 'Mahsulot'} #{index + 1}
+                  {o.type === 'service' ? t('offerings.service') : t('offerings.product')} #{index + 1}
                 </span>
                 <button
                   type="button"
-                  aria-label="O‘chirish"
+                  aria-label={t('common.delete')}
                   disabled={disabled}
                   onClick={() => remove(o.clientId)}
                   className="p-2 rounded-[var(--radius-sm)] text-[var(--color-text-muted)] hover:bg-[var(--color-danger-bg)] hover:text-[var(--color-danger)]"
@@ -97,17 +100,17 @@ export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disable
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField label="Nomi *">
+                <FormField label={t('offerings.name')}>
                   <input
                     required
                     value={o.name}
                     disabled={disabled}
                     onChange={(e) => update(o.clientId, { name: e.target.value })}
                     className={inputClassName}
-                    placeholder="Samsung A55 8/256"
+                    placeholder={t('offerings.namePlaceholder')}
                   />
                 </FormField>
-                <FormField label="Turi">
+                <FormField label={t('offerings.type')}>
                   <select
                     value={o.type}
                     disabled={disabled}
@@ -116,52 +119,52 @@ export function CampaignOfferingsEditor({ offerings, onChange, brandUrl, disable
                     }
                     className={selectClassName}
                   >
-                    <option value="product">Mahsulot</option>
-                    <option value="service">Xizmat</option>
+                    <option value="product">{t('offerings.product')}</option>
+                    <option value="service">{t('offerings.service')}</option>
                   </select>
                 </FormField>
               </div>
 
-              <FormField label="Qisqa tavsif">
+              <FormField label={t('offerings.description')}>
                 <textarea
                   value={o.description}
                   disabled={disabled}
                   onChange={(e) => update(o.clientId, { description: e.target.value })}
                   className={textareaClassName}
                   rows={2}
-                  placeholder="Asosiy afzalliklar, muddatli to‘lov, kafolat…"
+                  placeholder={t('offerings.descriptionPlaceholder')}
                 />
               </FormField>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <FormField label="Havola (ixtiyoriy)" hint="Mahsulot yoki xizmat sahifasi">
+                <FormField label={t('offerings.link')} hint={t('offerings.linkHint')}>
                   <input
                     type="url"
                     value={o.url}
                     disabled={disabled}
                     onChange={(e) => update(o.clientId, { url: e.target.value })}
                     className={inputClassName}
-                    placeholder={brandUrl || 'https://...'}
+                    placeholder={brandUrl || t('offerings.linkPlaceholder')}
                   />
                 </FormField>
-                <FormField label="Narx (ixtiyoriy)">
+                <FormField label={t('offerings.price')}>
                   <input
                     value={o.price_hint}
                     disabled={disabled}
                     onChange={(e) => update(o.clientId, { price_hint: e.target.value })}
                     className={inputClassName}
-                    placeholder="2 450 000 so‘m"
+                    placeholder={t('offerings.pricePlaceholder')}
                   />
                 </FormField>
               </div>
 
-              <FormField label="Kalit so‘zlar" hint="Vergul bilan — shu mahsulot uchun">
+              <FormField label={t('offerings.keywords')} hint={t('offerings.keywordsHint')}>
                 <input
                   value={o.keywords}
                   disabled={disabled}
                   onChange={(e) => update(o.clientId, { keywords: e.target.value })}
                   className={inputClassName}
-                  placeholder="uzumda telefon, a55 narxi"
+                  placeholder={t('offerings.keywordsPlaceholder')}
                 />
               </FormField>
             </div>

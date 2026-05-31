@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileText, Loader2 } from 'lucide-react';
 import { api } from '../../../lib/api';
 import { offeringsToApi } from '../../../lib/campaignOfferings';
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function CampaignProfilePanel({ form, open = true }: Props) {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -52,10 +54,8 @@ export function CampaignProfilePanel({ form, open = true }: Props) {
       <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--color-border)] bg-white">
         <FileText className="w-4 h-4 text-[var(--color-primary)]" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-[var(--color-text)]">AI matching profili</p>
-          <p className="text-xs text-[var(--color-text-secondary)]">
-            Chatda moslashtirish uchun ishlatiladigan matn (embedding shu asosida)
-          </p>
+          <p className="text-sm font-semibold text-[var(--color-text)]">{t('campaigns.form.profileTitle')}</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">{t('campaigns.form.profileDesc')}</p>
         </div>
         {loading && <Loader2 className="w-4 h-4 animate-spin text-[var(--color-primary)]" />}
       </div>
@@ -66,11 +66,13 @@ export function CampaignProfilePanel({ form, open = true }: Props) {
           </p>
         ) : (
           <p className="text-xs text-[var(--color-text-muted)]">
-            {loading ? 'Profil hisoblanmoqda…' : 'Nom va kategoriya kiriting'}
+            {loading ? t('campaigns.form.profileLoading') : t('campaigns.form.profileEmpty')}
           </p>
         )}
         {text && (
-          <p className="text-[10px] text-[var(--color-text-muted)] mt-2">{text.length} belgi</p>
+          <p className="text-[10px] text-[var(--color-text-muted)] mt-2">
+            {t('campaigns.form.profileChars', { count: text.length })}
+          </p>
         )}
       </div>
     </div>

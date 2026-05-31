@@ -1,639 +1,752 @@
 {
-        "language": "Русский",
-        "currency": "UZS",
-        "currencySymbol": "сўм",
-        "auth": {
-                "login": "Вход",
-                "register": "Регистрация",
-                "logout": "Выход",
-                "email": "Email",
-                "password": "Пароль",
-                "confirmPassword": "Подтвердите пароль",
-                "businessOwner": "Владелец бизнеса",
-                "agent": "Агент",
-                "role": "Роль",
-                "signUp": "Зарегистрироваться",
-                "signIn": "Войти",
-                "alreadyAccount": "У вас уже есть аккаунт?",
-                "noAccount": "У вас нет аккаунта?",
-                "forgotPassword": "Забыли пароль?",
-                "rememberMe": "Запомнить меня",
-                "loginPageTitle": "Вход - Synaptic AI",
-                "loginPageDesc": "Войдите в Synaptic AI и управляйте своей рекламой.",
-                "welcomeBack": "Добро пожаловать в Synaptic AI",
-                "emailPlaceholder": "вы@компания.uz",
-                "passwordPlaceholder": "••••••••",
-                "loginFailed": "Ошибка входа",
-                "registerPageTitle": "Регистрация - Synaptic AI",
-                "registerPageDesc": "Присоединяйтесь к Synaptic AI и начните размещать рекламу через ИИ-агентов.",
-                "createAccount": "Создать аккаунт",
-                "joinFuture": "Присоединяйтесь к будущему ИИ-рекламы",
-                "roleBusiness": "Бизнес",
-                "roleAgent": "ИИ-агент",
-                "registerFailed": "Ошибка регистрации"
-        },
-        "navigation": {
-                "home": "Главная",
-                "dashboard": "Панель управления",
-                "campaigns": "Кампании",
-                "campaigns_plural": "Кампании",
-                "analytics": "Аналитика",
-                "agents": "Агенты",
-                "wallet": "Кошелек",
-                "profile": "Профиль",
-                "settings": "Настройки",
-                "chat": "Чат",
-                "demo": "Демо",
-                "help": "Справка"
-        },
-        "campaigns": {
-                "title": "Кампании",
-                "create": "Новая кампания",
-                "edit": "Редактировать кампанию",
-                "delete": "Удалить кампанию",
-                "name": "Название кампании",
-                "category": "Категория",
-                "subcategory": "Подкатегория",
-                "customCategory": "Другая категория",
-                "brandUrl": "URL бренда",
-                "linkText": "Текст ссылки",
-                "tagline": "Девиз",
-                "description": "Описание",
-                "keywords": "Ключевые слова",
-                "nicheKeywords": "Специальные ключевые слова",
-                "offerings": "Продукты/Услуги",
-                "cpcRate": "Цена за клик",
-                "tone": "Тон",
-                "status": "Статус",
-                "active": "Активна",
-                "inactive": "Неактивна",
-                "pause": "Пауза",
-                "resume": "Возобновить",
-                "createdAt": "Создана",
-                "updatedAt": "Обновлена",
-                "noData": "Кампаний нет",
-                "createFirst": "Создайте свою первую кампанию",
-                "successCreate": "Кампания успешно создана",
-                "successUpdate": "Кампания успешно обновлена",
-                "successDelete": "Кампания успешно удалена",
-                "errorCreate": "Не удалось создать кампанию",
-                "errorUpdate": "Не удалось обновить кампанию",
-                "errorDelete": "Не удалось удалить кампанию",
-                "errorLoad": "Не удалось загрузить кампании",
-                "successCopyLink": "Ссылка для отслеживания скопирована",
-                "successRefreshEmbedding": "Эмбеддинг успешно обновлен",
-                "errorRefreshEmbedding": "Не удалось обновить эмбеддинг",
-                "confirmDelete": "Вы уверены, что хотите удалить кампанию \"{{name}}\"?",
-                "errorValidation": "Добавьте хотя бы одно ключевое слово или продукт/услугу",
-                "successResume": "Кампания возобновлена",
-                "successPause": "Кампания на паузе",
-                "errorStatusUpdate": "Не удалось обновить статус",
-                "copyTrackingLink": "Копировать ссылку отслеживания",
-                "refreshEmbedding": "Обновить эмбеддинг",
-                "listTitle": "Доступные кампании",
-                "paused": "На паузе",
-                "budget": "Бюджет",
-                "remaining": "Осталось",
-                "cpc": "CPC",
-                "trackingCode": "Код отслеживания",
-                "form": {
-                        "basicInfo": "Основная информация",
-                        "keywordsHint": "Через запятую или авто из продуктов",
-                        "cpcHint": "За каждый клик",
-                        "ctaPlaceholder": "Узнать больше",
-                        "creating": "Создание...",
-                        "saving": "Сохранение...",
-                        "errorInvalidUrl": "Сначала введите правильный URL бренда (https://...)",
-                        "successResearch": "Поля и {{count}} продуктов/услуг заполнены",
-                        "successResearchAll": "Все поля заполнены ИИ",
-                        "errorResearch": "Исследование ИИ не удалось",
-                        "aiTitle": "Полное автозаполнение ИИ",
-                        "aiDesc": "Все поля заполняются автоматически при вводе ссылки. Нажмите кнопку для обновления вручную.",
-                        "researchBrief": "Краткое описание (необязательно)",
-                        "researchBriefHint": "Дополнительный контекст для ИИ",
-                        "researchBriefPlaceholder": "Например: Онлайн-курсы в Ташкенте",
-                        "runAi": "Перезаполнить с помощью ИИ",
-                        "researching": "ИИ анализирует...",
-                        "updatingFields": "Поля обновляются..."
-                },
-                "firstCampaign": "Ваша первая кампания",
-                "onboardingDesc": "Введите сайт бренда и продукты — ИИ автоматически заполнит ключевые слова, девиз и аудиторию.",
-                "editCampaign": "Редактировать кампанию",
-                "creatingNew": "Создание новой кампании...",
-                "headerDesc": "Нажмите «Новая кампания» — ИИ заполнит поля. Когда будете готовы, проверьте результаты в аналитике.",
-                "taMahsulot": "{{count}} продуктов/услуг",
-                "editNamed": "Редактировать {{name}}",
-                "deleteNamed": "Удалить {{name}}",
-                "tones": {
-                        "informative": "Информативный",
-                        "promotional": "Рекламный",
-                        "comparative": "Сравнительный",
-                        "dealFocused": "Скидка / Акция"
-                }
-        },
-        "wallet": {
-                "title": "Кошелек",
-                "balance": "Баланс",
-                "deposit": "Пополнение",
-                "withdraw": "Вывод",
-                "transactions": "Транзакции",
-                "amount": "Сумма",
-                "date": "Дата",
-                "type": "Тип",
-                "status": "Статус",
-                "mockDeposit": "Тестовое пополнение",
-                "mockDepositAmount": "50 000",
-                "deposit50k": "Пополнить на 50 000 UZS",
-                "testDepositNote": "Тестовый режим: симуляция пополнения для демо",
-                "successDeposit": "Пополнение успешно",
-                "errorDeposit": "Ошибка при пополнении",
-                "loadError": "Не удалось загрузить кошелек",
-                "depositSuccess": "Баланс пополнен",
-                "depositError": "Пополнение не удалось",
-                "panelTitle": "Рекламный кошелек",
-                "walletLabel": "Кошелек",
-                "unallocated": "Не распределено",
-                "inCampaigns": "В кампаниях",
-                "unusedBudget": "Неиспользованный бюджет",
-                "spent": "Потрачено",
-                "byClicks": "По кликам",
-                "walletDesc": "При создании кампании бюджет автоматически выделяется из кошелька. Реклама останавливается, если бюджет заканчивается.",
-                "testDepositLabel": "Тестовое пополнение (сервер: ALLOW_MOCK_DEPOSIT=1)",
-                "depositBtn": "Пополнить",
-                "uzs": "сум"
-        },
-        "profile": {
-                "title": "Профиль",
-                "displayName": "Отображаемое имя",
-                "companyName": "Название компании",
-                "phone": "Номер телефона",
-                "email": "Email",
-                "currentPassword": "Текущий пароль",
-                "newPassword": "Новый пароль",
-                "confirmNewPassword": "Подтвердите новый пароль",
-                "edit": "Редактировать профиль",
-                "changePassword": "Изменить пароль",
-                "save": "Сохранить",
-                "cancel": "Отмена",
-                "successUpdate": "Профиль успешно обновлен",
-                "errorUpdate": "Не удалось обновить профиль",
-                "loadError": "Не удалось загрузить данные профиля",
-                "sessionsLoadError": "Не удалось загрузить сессии",
-                "saveSuccess": "Профиль сохранен",
-                "saveError": "Не удалось сохранить",
-                "passwordsMismatch": "Новые пароли не совпадают",
-                "passwordTooShort": "Новый пароль должен содержать не менее 6 символов",
-                "passwordUpdateSuccess": "Пароль обновлен",
-                "passwordUpdateError": "Не удалось обновить пароль",
-                "sessionRevokeSuccess": "Сессия аннулирована",
-                "sessionRevokeError": "Не удалось аннулировать",
-                "sessionsRevokeAllSuccess": "Другие сессии аннулированы",
-                "pageTitle": "Профиль — Synaptic",
-                "headerTitle": "Профиль",
-                "headerDescBusiness": "Имя и компания улучшают соответствие ИИ-рекламы. Сохраните, затем создайте кампанию.",
-                "headerDescAgent": "Имя и телефон видны в панели. Ключи API находятся в разделе «Агенты».",
-                "noName": "Имя не указано",
-                "campaigns": "Кампании",
-                "active": "Активны",
-                "agents": "Агенты",
-                "clicks": "Клики",
-                "goToCampaigns": "Перейти к кампаниям",
-                "goToAgents": "Перейти к агентам",
-                "infoTab": "Данные",
-                "passwordTab": "Пароль",
-                "sessionsTab": "Сессии",
-                "saveSuccessDesc": "Профиль сохранен. Теперь вы можете добавить {{type}}.",
-                "campaign": "кампанию",
-                "agent": "агента",
-                "nameLabel": "Имя",
-                "nameHint": "Видно в панели управления",
-                "namePlaceholder": "Например: Дильёр",
-                "companyLabel": "Компания",
-                "companyHint": "Используется в рекламном тексте ИИ",
-                "companyPlaceholder": "Например: Hamkorbank",
-                "phoneLabel": "Телефон",
-                "phoneHint": "Необязательно",
-                "saveBtn": "Сохранить",
-                "cancelBtn": "Отмена",
-                "passwordNote": "После изменения пароля вам может потребоваться повторный вход на других устройствах.",
-                "currentPasswordLabel": "Текущий пароль",
-                "newPasswordLabel": "Новый пароль",
-                "newPasswordHint": "Минимум 6 символов",
-                "confirmPasswordLabel": "Подтверждение",
-                "updatePasswordBtn": "Обновить пароль",
-                "sessionsNote": "Активные устройства. Аннулируйте все сессии, чтобы выйти из других мест.",
-                "loadingSessions": "Загрузка устройств...",
-                "noOtherSessions": "Других активных устройств нет — только текущая сессия браузера",
-                "currentSession": "(текущая)",
-                "unknownIp": "IP неизвестен",
-                "lastUsed": "последний раз: {{date}}",
-                "revokeBtn": "Выйти",
-                "revokeAllBtn": "Аннулировать все остальные сессии",
-                "roleBusiness": "Бизнес",
-                "roleAgent": "ИИ агент"
-        },
-        "analytics": {
-                "title": "Аналитика",
-                "businessAnalytics": "Бизнес аналитика",
-                "agentAnalytics": "Аналитика агента",
-                "impressions": "Показы",
-                "clicks": "Клики",
-                "conversions": "Конверсии",
-                "ctr": "CTR",
-                "conversionRate": "Коэффициент конверсии",
-                "spent": "Потрачено",
-                "revenue": "Доход",
-                "period": "Период",
-                "today": "Сегодня",
-                "week": "Последние 7 дней",
-                "month": "Последние 30 дней",
-                "all": "За все время",
-                "noDataDesc": "Создайте свою первую кампанию, чтобы увидеть аналитику.",
-                "campaignAnalytics": "{{name}} — аналитика",
-                "description": "Последние {{days}} дней: показы, клики, CTR и потраченный бюджет.",
-                "selectCampaign": "Выберите кампанию",
-                "hints": {
-                        "ctr": "Показ → клик",
-                        "cpc": "За каждый клик"
-                },
-                "budgetRemaining": "Остаток бюджета",
-                "totalBudget": "Всего: {{amount}} сум",
-                "dailyActivity": "Ежедневная активность",
-                "dailyActivityDesc": "Клики и показы — {{days}} дней",
-                "funnel": "Воронка конверсии",
-                "funnelDesc": "Показ → клик → конверсия ({{days}} дней)",
-                "stage": "Этап",
-                "count": "Количество",
-                "percentage": "Процент"
-        },
-        "agents": {
-                "title": "Агенты",
-                "register": "Регистрация агента",
-                "username": "Имя пользователя",
-                "ownerEmail": "Email владельца",
-                "apiKey": "API ключ",
-                "stats": "Статистика",
-                "totalRequests": "Всего запросов",
-                "lastSeen": "Последний раз виден",
-                "active": "Активен",
-                "inactive": "Неактивен",
-                "successRegister": "Агент успешно зарегистрирован",
-                "errorRegister": "Не удалось зарегистрировать агента",
-                "headerTitle": "ИИ агенты",
-                "headerDesc": "«Добавить агента» — вы получите ключ API. Подключите его к своему боту, а затем протестируйте в демо-чате.",
-                "registerBtn": "Регистрация агента",
-                "registerDialogTitle": "Новый ИИ агент",
-                "registerSuccessDesc": "Агент успешно зарегистрирован. Скопируйте ключ API сейчас — он больше не будет показан.",
-                "copy": "Копировать",
-                "copied": "Скопировано!",
-                "ready": "Готово",
-                "usernameLabel": "Имя пользователя агента *",
-                "usernameHint": "Используется в ссылках отслеживания и аналитике",
-                "usernamePlaceholder": "мой-телеграм-бот",
-                "ownerEmailLabel": "Email владельца",
-                "registering": "Регистрация...",
-                "createApiKey": "Создать ключ API",
-                "noAgents": "Агенты еще не зарегистрированы",
-                "registerFirst": "Зарегистрируйте своего первого агента",
-                "lastActivity": "Последняя активность: {{date}}",
-                "paused": "На паузе",
-                "pause": "Пауза",
-                "resume": "Продолжить",
-                "delete": "Удалить",
-                "deleteConfirm": "Вы уверены, что хотите удалить агента \"{{username}}\"?",
-                "deleteSuccess": "Агент удален",
-                "deleteError": "Не удалось удалить агента",
-                "statusActive": "Агент активирован",
-                "statusPaused": "Агент на паузе",
-                "statusError": "Не удалось обновить статус",
-                "agentId": "ID агента",
-                "status": "Статус",
-                "actions": "Действия",
-                "requests": "Запросы",
-                "clicks": "Клики",
-                "registerError": "Не удалось зарегистрировать агента"
-        },
-        "chat": {
-                "title": "Демо чата",
-                "message": "Сообщение",
-                "send": "Отправить",
-                "placeholder": "Введите сообщение...",
-                "thinking": "Обработка...",
-                "error": "Ошибка",
-                "retry": "Повторить",
-                "clear": "Очистить",
-                "fallbackAnswer": "Я могу помочь с вашим вопросом. Если вы напишете немного подробнее, я смогу дать более точный ответ.",
-                "welcomeMessage": "**Здравствуйте!** Я простой ИИ-помощник — я отвечу на ваши вопросы.\n\nЕсли тема совпадет, ниже появится **нативная реклама** (как в Telegram-ботах). Выберите один из готовых вопросов ниже или напишите свой.",
-                "moreInfo": "Подробнее",
-                "newChatStarted": "Начат новый чат",
-                "aiError": "Ответ ИИ временно недоступен — показывается простой ответ",
-                "pageTitle": "Демо — Synaptic AI чат",
-                "pageDesc": "Демо чата Synaptic AI — нативная реклама и Markdown ответы.",
-                "homeLink": "Главная",
-                "sidebarTitle": "Демо чат",
-                "sidebarDesc": "Ответ ИИ + контекстная реклама. Попробуйте для Hamkorbank и других кампаний.",
-                "newChat": "Новый чат",
-                "back": "Назад",
-                "writing": "Печатает ответ...",
-                "demoSubtitle": "Демо · Markdown · нативная реклама",
-                "new": "Новый",
-                "categories": {
-                        "finance": "Финансы",
-                        "tech": "Техника",
-                        "food": "Еда",
-                        "fashion": "Мода",
-                        "bank": "Банк и кредит",
-                        "phones": "Телефоны",
-                        "delivery": "Доставка"
-                },
-                "prompts": {
-                        "loan": "Можно ли получить кредит в Hamkorbank?",
-                        "installment": "Покупки в рассрочку",
-                        "laptop": "Я хочу купить ноутбук",
-                        "iphone": "Какие цены на iPhone 15?",
-                        "pizza": "Доставка пиццы в Ташкенте",
-                        "dinner": "Заказать ужин",
-                        "clothing": "Где можно купить одежду?",
-                        "sneakers": "Цены на кроссовки"
-                },
-                "inputPlaceholder": "Введите ваш вопрос..."
-        },
-        "common": {
-                "save": "Сохранить",
-                "cancel": "Отмена",
-                "delete": "Удалить",
-                "edit": "Редактировать",
-                "add": "Добавить",
-                "remove": "Удалить",
-                "loading": "Загрузка...",
-                "error": "Ошибка",
-                "success": "Успешно",
-                "warning": "Предупреждение",
-                "yes": "Да",
-                "no": "Нет",
-                "search": "Поиск",
-                "filter": "Фильтр",
-                "sort": "Сортировка",
-                "close": "Закрыть",
-                "next": "Далее",
-                "previous": "Назад",
-                "back": "Назад",
-                "submit": "Отправить",
-                "copy": "Копировать",
-                "share": "Поделиться",
-                "download": "Скачать",
-                "export": "Экспорт",
-                "import": "Импорт",
-                "days": "дн.",
-                "uzs": "сум",
-                "thousandUzs": "тыс. сум",
-                "status": "Статус",
-                "actions": "Действия",
-                "select": "Выберите…",
-                "optional": "(необязательно)"
-        },
-        "errors": {
-                "required": "Это поле обязательно",
-                "invalidEmail": "Неверный адрес электронной почты",
-                "passwordTooShort": "Пароль должен содержать как минимум 8 символов",
-                "passwordMismatch": "Пароли не совпадают",
-                "unauthorized": "Не авторизовано",
-                "forbidden": "Запрещено",
-                "notFound": "Не найдено",
-                "serverError": "Ошибка сервера",
-                "networkError": "Ошибка сети"
-        },
-        "dashboard": {
-                "welcome": "Добро пожаловать, {{name}}!",
-                "panel": "Панель управления",
-                "businessDesc": "Выполните следующие шаги, чтобы начать работу в рекламной сети.",
-                "agentDesc": "Подключите своего агента, отслеживайте доходы и протестируйте API в демо-чате.",
-                "onboardingProgress": "Прогресс онбординга",
-                "ready": "Все готово",
-                "nextStep": "Следующий шаг",
-                "greatKeepGoing": "Отлично - продолжайте",
-                "manageCampaignsOrAnalytics": "Управляйте кампаниями или просматривайте аналитику.",
-                "monitorAgentsAndEarnings": "Мониторинг агентов и панели доходов.",
-                "allSteps": "Все шаги",
-                "helpNeeded": "Нужна помощь?",
-                "checkFormat": "Посмотрите формат рекламы в демо-чате.",
-                "steps": {
-                        "campaign": {
-                                "title": "Создать кампанию",
-                                "description": "ИИ анализирует ваш бренд - ключевые слова и продукты заполняются автоматически.",
-                                "cta": "Управление кампаниями",
-                                "ctaFirst": "Первая кампания"
-                        },
-                        "analytics": {
-                                "title": "Отслеживание результатов",
-                                "description": "CTR, клики и потраченный бюджет - за 7-дневный период.",
-                                "cta": "Открыть аналитику"
-                        },
-                        "demo": {
-                                "title": "Попробуйте в демо-чате",
-                                "description": "Посмотрите, как выглядит реклама, когда пользователь задает вопрос.",
-                                "cta": "Демо-чат"
-                        },
-                        "profile": {
-                                "title": "Заполните профиль",
-                                "description": "Название компании и контакты - ИИ лучше подбирает релевантную рекламу.",
-                                "cta": "Профиль"
-                        },
-                        "agent": {
-                                "title": "Подключите своего агента",
-                                "description": "Получите ключ API и интегрируйте его в Telegram или веб-бота.",
-                                "cta": "Управление агентами",
-                                "ctaAdd": "Добавить агента"
-                        },
-                        "earnings": {
-                                "title": "Отслеживание доходов",
-                                "description": "Клики и доля агента - в режиме реального времени.",
-                                "cta": "Панель доходов"
-                        },
-                        "apiDemo": {
-                                "title": "Тестирование API в демо-чате",
-                                "description": "Посмотрите ответ и формат рекламы с ключом sk-synaptic-demo.",
-                                "cta": "Демо-чат"
-                        }
-                }
-        },
-        "landing": {
-                "hero": {
-                        "label": "AI-Native Ad Protocol",
-                        "title": "Новый рекламный протокол эры ИИ",
-                        "subtitle": "Решение AdSense для генеративного ИИ и чат-ботов — реклама не баннер, а естественная и измеримая часть диалога.",
-                        "description": "У ботов есть трафик, но нет денег. У бизнеса есть деньги, но нет пути к ИИ-аудитории. Synaptic соединяет их.",
-                        "startBusiness": "Начать как бизнес",
-                        "demoChat": "Демо-чат",
-                        "stats": {
-                                "adSelection": "Подбор рекламы",
-                                "avgCpc": "Средний CPC",
-                                "agentShare": "Доля агента"
-                        }
-                },
-                "problem": {
-                        "label": "Проблема",
-                        "title": "Кризис Zero-Click поиска и разрыв в монетизации",
-                        "items": {
-                                "zeroClick": {
-                                        "title": "Zero-click кризис",
-                                        "desc": "Ожидается, что к 2028 году органический поисковый трафик сократится на 50% — аудитория переходит в ИИ-чаты."
-                                },
-                                "bannerBlindness": {
-                                        "title": "Баннерная слепота",
-                                        "desc": "CTR традиционной рекламы ниже 0,5%. Бизнес тратит бюджет, но результат низкий."
-                                },
-                                "infraCosts": {
-                                        "title": "Затраты на ИИ-инфраструктуру",
-                                        "desc": "Создатели ботов платят за токены и серверы, но готовой системы монетизации нет."
-                                }
-                        }
-                },
-                "features": {
-                        "label": "Решение",
-                        "title": "Архитектура Synaptic — контекстная, быстрая, прозрачная",
-                        "items": {
-                                "contextual": {
-                                        "title": "Контекстный эмбеддинг",
-                                        "desc": "Запрос векторизуется — релевантная реклама подбирается параллельно, не мешая ответу LLM."
-                                },
-                                "native": {
-                                        "title": "Нативная рекомендация",
-                                        "desc": "Не баннер — реклама появляется естественно как «Рекомендация Synaptic» под ответом ИИ."
-                                },
-                                "fastIntegration": {
-                                        "title": "Подключение за 5 минут",
-                                        "desc": "Один REST API: Telegram бот, веб или корпоративный чат — быстрая интеграция."
-                                }
-                        }
-                },
-                "pipeline": {
-                        "label": "Pipeline",
-                        "title": "4-этапный конвейер данных",
-                        "subtitle": "Весь процесс занимает менее 150 мс — незаметно при скорости работы бота.",
-                        "steps": {
-                                "scan": {
-                                        "title": "Сканирование запроса",
-                                        "desc": "Промпт и ответ передаются асинхронно через SDK"
-                                },
-                                "vectorize": {
-                                        "title": "Векторизация",
-                                        "desc": "Модель эмбеддингов, адаптированная для узбекского языка"
-                                },
-                                "match": {
-                                        "title": "Сопоставление",
-                                        "desc": "Косинусное сходство с базой рекламных объявлений"
-                                },
-                                "output": {
-                                        "title": "Нативный вывод",
-                                        "desc": "Рекомендация + ссылка для отслеживания — <150 мс"
-                                }
-                        }
-                },
-                "market": {
-                        "label": "Рынок",
-                        "title": "TAM / SAM / SOM",
-                        "items": {
-                                "tam": {
-                                        "hint": "Рынок цифровой рекламы УЗ"
-                                },
-                                "sam": {
-                                        "hint": "Telegram + контекстная реклама"
-                                },
-                                "som": {
-                                        "hint": "Годовая цель через 12–18 месяцев"
-                                }
-                        }
-                },
-                "business": {
-                        "label": "Бизнес-модель",
-                        "title": "Сеть RevShare",
-                        "avgCpc": "Средний CPC",
-                        "revShare": {
-                                "agent": "Издатель (агент) — 60%",
-                                "synaptic": "Synaptic — 40%",
-                                "netProfit": "Чистая прибыль (IT Park)",
-                                "annualHint": "* Прогноз Pitch deck, сценарий SOM"
-                        }
-                },
-                "compare": {
-                        "label": "Конкуренция",
-                        "title": "Глобальные и региональные системы не понимают узбекскую семантику",
-                        "headers": {
-                                "market": "Рынок",
-                                "global": "США / Глобальный",
-                                "russia": "Россия",
-                                "synaptic": "Узбекистан · Synaptic"
-                        },
-                        "rows": {
-                                "semantics": {
-                                        "label": "Семантика",
-                                        "global": "Английский язык",
-                                        "russia": "Русский язык",
-                                        "synaptic": "Узбекский язык"
-                                },
-                                "format": {
-                                        "label": "Format",
-                                        "global": "Баннер / дисплей",
-                                        "russia": "Классический веб",
-                                        "synaptic": "Нативная внутри ИИ"
-                                },
-                                "revenue": {
-                                        "label": "Доход агента",
-                                        "global": "Н/Д",
-                                        "russia": "Ограничен",
-                                        "synaptic": "RevShare 60%"
-                                }
-                        }
-                },
-                "roadmap": {
-                        "label": "Стратегия",
-                        "title": "Выход на рынок",
-                        "items": {
-                                "phase1": {
-                                        "title": "Подключение",
-                                        "desc": "Топ узбекских ИИ-ботов. 70/30 RevShare опцион."
-                                },
-                                "phase2": {
-                                        "title": "Тестирование",
-                                        "desc": "EdTech, FinTech, e-commerce. Пробный бюджет $15k."
-                                },
-                                "phase3": {
-                                        "title": "Масштабирование",
-                                        "desc": "Кабинет самообслуживания. Интеграция с Uzum API."
-                                }
-                        }
-                },
-                "audience": {
-                        "title": "Для кого Synaptic?",
-                        "subtitle": "Одна платформа — сетевой эффект с двух сторон: бизнес охватывает аудиторию, агенты получают доход.",
-                        "business": {
-                                "title": "Бизнес / Бренд",
-                                "features": {
-                                        "native": "Нативная реклама внутри ИИ",
-                                        "wallet": "Кошелек и бюджет кампании",
-                                        "analytics": "Аналитика CTR и CPC"
-                                },
-                                "cta": "Открыть кабинет"
-                        },
-                        "agent": {
-                                "title": "ИИ-агент / Издатель",
-                                "features": {
-                                        "api": "REST API за 5 минут",
-                                        "revShare": "60% RevShare",
-                                        "demo": "Попробовать с демо-ключом"
-                                },
-                                "cta": "Добавить агента"
-                        }
-                },
-                "final": {
-                        "title": "Первая рекламная ИИ-сеть в Узбекистане и Центральной Азии",
-                        "subtitle": "MVP готов — посмотрите нативную рекламу в демо-чате, затем подключите кампанию или агента.",
-                        "startFree": "Начать бесплатно",
-                        "login": "Войти"
-                },
-                "footer": {
-                        "copy": "Synaptic — AI-Native Ad Protocol"
-                }
-        }
+	"language": "Русский",
+	"currency": "UZS",
+	"currencySymbol": "сўм",
+	"auth": {
+		"login": "Вход",
+		"register": "Регистрация",
+		"logout": "Выход",
+		"email": "Email",
+		"password": "Пароль",
+		"confirmPassword": "Подтвердите пароль",
+		"businessOwner": "Владелец бизнеса",
+		"agent": "Агент",
+		"role": "Роль",
+		"signUp": "Зарегистрироваться",
+		"signIn": "Войти",
+		"alreadyAccount": "У вас уже есть аккаунт?",
+		"noAccount": "У вас нет аккаунта?",
+		"forgotPassword": "Забыли пароль?",
+		"rememberMe": "Запомнить меня",
+		"loginPageTitle": "Вход - Synaptic AI",
+		"loginPageDesc": "Войдите в Synaptic AI и управляйте своей рекламой.",
+		"welcomeBack": "Добро пожаловать в Synaptic AI",
+		"emailPlaceholder": "вы@компания.uz",
+		"passwordPlaceholder": "••••••••",
+		"loginFailed": "Ошибка входа",
+		"registerPageTitle": "Регистрация - Synaptic AI",
+		"registerPageDesc": "Присоединяйтесь к Synaptic AI и начните размещать рекламу через ИИ-агентов.",
+		"createAccount": "Создать аккаунт",
+		"joinFuture": "Присоединяйтесь к будущему ИИ-рекламы",
+		"roleBusiness": "Бизнес",
+		"roleAgent": "ИИ-агент",
+		"registerFailed": "Ошибка регистрации",
+		"invalid_credentials": "Неверный email или пароль",
+		"email_already_registered": "Этот email уже зарегистрирован",
+		"registration_failed": "Ошибка регистрации",
+		"user_not_found": "Пользователь не найден",
+		"profile_update_failed": "Не удалось обновить профиль",
+		"current_password_incorrect": "Текущий пароль неверный",
+		"password_incorrect": "Пароль неверный",
+		"refresh_token_required": "Требуется токен обновления",
+		"refresh_token_expired": "Сессия истекла, пожалуйста, войдите снова",
+		"refresh_token_invalid": "Недействительная сессия",
+		"session_revoke_current_error": "Невозможно завершить текущую сессию"
+	},
+	"navigation": {
+		"home": "Главная",
+		"dashboard": "Панель управления",
+		"campaigns": "Кампании",
+		"campaigns_plural": "Кампании",
+		"analytics": "Аналитика",
+		"agents": "Агенты",
+		"wallet": "Кошелек",
+		"profile": "Профиль",
+		"settings": "Настройки",
+		"chat": "Чат",
+		"demo": "Демо",
+		"help": "Справка",
+		"skipToMain": "Перейти к основному контенту"
+	},
+	"campaigns": {
+		"title": "Кампании",
+		"create": "Новая кампания",
+		"edit": "Редактировать кампанию",
+		"delete": "Удалить кампанию",
+		"name": "Название кампании",
+		"category": "Категория",
+		"subcategory": "Подкатегория",
+		"customCategory": "Другая категория",
+		"brandUrl": "URL бренда",
+		"linkText": "Текст ссылки",
+		"tagline": "Девиз",
+		"description": "Описание",
+		"keywords": "Ключевые слова",
+		"nicheKeywords": "Специальные ключевые слова",
+		"offerings": "Продукты/Услуги",
+		"cpcRate": "Цена за клик",
+		"tone": "Тон",
+		"status": "Статус",
+		"active": "Активна",
+		"inactive": "Неактивна",
+		"pause": "Пауза",
+		"resume": "Возобновить",
+		"createdAt": "Создана",
+		"updatedAt": "Обновлена",
+		"noData": "Кампаний нет",
+		"createFirst": "Создайте свою первую кампанию",
+		"successCreate": "Кампания успешно создана",
+		"successUpdate": "Кампания успешно обновлена",
+		"successDelete": "Кампания успешно удалена",
+		"errorCreate": "Не удалось создать кампанию",
+		"errorUpdate": "Не удалось обновить кампанию",
+		"errorDelete": "Не удалось удалить кампанию",
+		"errorLoad": "Не удалось загрузить кампании",
+		"successCopyLink": "Ссылка для отслеживания скопирована",
+		"successRefreshEmbedding": "Эмбеддинг успешно обновлен",
+		"errorRefreshEmbedding": "Не удалось обновить эмбеддинг",
+		"confirmDelete": "Вы уверены, что хотите удалить кампанию \"{{name}}\"?",
+		"errorValidation": "Добавьте хотя бы одно ключевое слово или продукт/услугу",
+		"successResume": "Кампания возобновлена",
+		"successPause": "Кампания на паузе",
+		"errorStatusUpdate": "Не удалось обновить статус",
+		"copyTrackingLink": "Копировать ссылку отслеживания",
+		"refreshEmbedding": "Обновить эмбеддинг",
+		"listTitle": "Доступные кампании",
+		"paused": "На паузе",
+		"budget": "Бюджет",
+		"remaining": "Осталось",
+		"cpc": "CPC",
+		"trackingCode": "Код отслеживания",
+	"form": {
+		"basicInfo": "Основная информация",
+		"brandUrlTitle": "Сайт бренда / URL",
+		"aiFill": "Автозаполнение ИИ",
+		"brandUrlHint": "Введите сайт бренда. ИИ проанализирует его и заполнит поля.",
+		"brandUrlPlaceholder": "https://example.com",
+		"namePlaceholder": "Например: весенняя акция",
+		"linkTextPlaceholder": "Узнать больше",
+		"taglinePlaceholder": "Короткий слоган",
+		"descriptionPlaceholder": "Краткое описание кампании",
+		"customCategoryPlaceholder": "Введите свою категорию",
+		"keywordsHint": "Через запятую или авто из продуктов",
+		"nicheKeywordsHint": "Ключевые слова ниши и намерения",
+		"cpcHint": "За каждый клик",
+		"ctaPlaceholder": "Узнать больше",
+		"creating": "Создание...",
+		"saving": "Сохранение...",
+		"errorInvalidUrl": "Сначала введите правильный URL бренда (https://...)",
+			"successResearch": "Поля и {{count}} продуктов/услуг заполнены",
+			"successResearchAll": "Все поля заполнены ИИ",
+			"errorResearch": "Исследование ИИ не удалось",
+			"aiTitle": "Полное автозаполнение ИИ",
+			"aiDesc": "Все поля заполняются автоматически при вводе ссылки. Нажмите кнопку для обновления вручную.",
+			"researchBrief": "Краткое описание (необязательно)",
+		"researchBriefHint": "Дополнительный контекст для ИИ",
+		"researchBriefPlaceholder": "Например: Онлайн-курсы в Ташкенте",
+		"runAi": "Перезаполнить с помощью ИИ",
+		"researching": "ИИ анализирует...",
+		"updatingFields": "Поля обновляются...",
+		"profileTitle": "Профиль подбора ИИ",
+		"profileDesc": "Текст, который используется для подбора в чате и embedding.",
+		"profileLoading": "Профиль рассчитывается...",
+		"profileEmpty": "Введите название и категорию",
+		"profileChars": "{{count}} знаков"
+	},
+		"firstCampaign": "Ваша первая кампания",
+		"onboardingDesc": "Введите сайт бренда и продукты — ИИ автоматически заполнит ключевые слова, девиз и аудиторию.",
+		"editCampaign": "Редактировать кампанию",
+		"creatingNew": "Создание новой кампании...",
+		"headerDesc": "Нажмите «Новая кампания» — ИИ заполнит поля. Когда будете готовы, проверьте результаты в аналитике.",
+		"taMahsulot": "{{count}} продуктов/услуг",
+		"editNamed": "Редактировать {{name}}",
+		"deleteNamed": "Удалить {{name}}",
+		"tones": {
+			"informative": "Информативный",
+			"promotional": "Рекламный",
+			"comparative": "Сравнительный",
+			"dealFocused": "Скидка / Акция"
+		}
+	},
+	"wallet": {
+		"title": "Кошелек",
+		"balance": "Баланс",
+		"deposit": "Пополнение",
+		"withdraw": "Вывод",
+		"transactions": "Транзакции",
+		"amount": "Сумма",
+		"date": "Дата",
+		"type": "Тип",
+		"status": "Статус",
+		"mockDeposit": "Тестовое пополнение",
+		"mockDepositAmount": "50 000",
+		"deposit50k": "Пополнить на 50 000 UZS",
+		"testDepositNote": "Тестовый режим: симуляция пополнения для демо",
+		"successDeposit": "Пополнение успешно",
+		"errorDeposit": "Ошибка при пополнении",
+		"loadError": "Не удалось загрузить кошелек",
+		"depositSuccess": "Баланс пополнен",
+		"depositError": "Пополнение не удалось",
+		"panelTitle": "Рекламный кошелек",
+		"walletLabel": "Кошелек",
+		"unallocated": "Не распределено",
+		"inCampaigns": "В кампаниях",
+		"unusedBudget": "Неиспользованный бюджет",
+		"spent": "Потрачено",
+		"byClicks": "По кликам",
+		"walletDesc": "При создании кампании бюджет автоматически выделяется из кошелька. Реклама останавливается, если бюджет заканчивается.",
+		"testDepositLabel": "Тестовое пополнение (сервер: ALLOW_MOCK_DEPOSIT=1)",
+		"depositBtn": "Пополнить",
+		"uzs": "сум",
+		"amountHint": "Максимум: {{max}} сум",
+		"errorMinDeposit": "Минимальная сумма: {{min}} сум",
+		"errorMaxDeposit": "Максимальная сумма: {{max}} сум",
+		"history": "История транзакций",
+		"depositType": "Пополнение",
+		"allocationType": "Выделение бюджета",
+		"load_failed": "Не удалось загрузить кошелек",
+		"deposit_test_mode_only": "Пополнение доступно только в тестовом режиме",
+		"deposit_failed": "Ошибка пополнения",
+		"allocate_failed": "Ошибка выделения бюджета",
+		"deallocate_failed": "Ошибка возврата бюджета"
+	},
+	"profile": {
+		"title": "Профиль",
+		"displayName": "Отображаемое имя",
+		"companyName": "Название компании",
+		"phone": "Номер телефона",
+		"email": "Email",
+		"currentPassword": "Текущий пароль",
+		"newPassword": "Новый пароль",
+		"confirmNewPassword": "Подтвердите новый пароль",
+		"edit": "Редактировать профиль",
+		"changePassword": "Изменить пароль",
+		"save": "Сохранить",
+		"cancel": "Отмена",
+		"successUpdate": "Профиль успешно обновлен",
+		"errorUpdate": "Не удалось обновить профиль",
+		"loadError": "Не удалось загрузить данные профиля",
+		"sessionsLoadError": "Не удалось загрузить сессии",
+		"saveSuccess": "Профиль сохранен",
+		"saveError": "Не удалось сохранить",
+		"passwordsMismatch": "Новые пароли не совпадают",
+		"passwordTooShort": "Новый пароль должен содержать не менее 6 символов",
+		"passwordUpdateSuccess": "Пароль обновлен",
+		"passwordUpdateError": "Не удалось обновить пароль",
+		"sessionRevokeSuccess": "Сессия аннулирована",
+		"sessionRevokeError": "Не удалось аннулировать",
+		"sessionsRevokeAllSuccess": "Другие сессии аннулированы",
+		"pageTitle": "Профиль — Synaptic",
+		"headerTitle": "Профиль",
+		"headerDescBusiness": "Имя и компания улучшают соответствие ИИ-рекламы. Сохраните, затем создайте кампанию.",
+		"headerDescAgent": "Имя и телефон видны в панели. Ключи API находятся в разделе «Агенты».",
+		"noName": "Имя не указано",
+		"campaigns": "Кампании",
+		"active": "Активны",
+		"agents": "Агенты",
+		"clicks": "Клики",
+		"goToCampaigns": "Перейти к кампаниям",
+		"goToAgents": "Перейти к агентам",
+		"infoTab": "Данные",
+		"passwordTab": "Пароль",
+		"sessionsTab": "Сессии",
+		"saveSuccessDesc": "Профиль сохранен. Теперь вы можете добавить {{type}}.",
+		"campaign": "кампанию",
+		"agent": "агента",
+		"nameLabel": "Имя",
+		"nameHint": "Видно в панели управления",
+		"namePlaceholder": "Например: Дильёр",
+		"companyLabel": "Компания",
+		"companyHint": "Используется в рекламном тексте ИИ",
+		"companyPlaceholder": "Например: Hamkorbank",
+		"phoneLabel": "Телефон",
+		"phoneHint": "Необязательно",
+		"saveBtn": "Сохранить",
+		"cancelBtn": "Отмена",
+		"passwordNote": "После изменения пароля вам может потребоваться повторный вход на других устройствах.",
+		"currentPasswordLabel": "Текущий пароль",
+		"newPasswordLabel": "Новый пароль",
+		"newPasswordHint": "Минимум 6 символов",
+		"confirmPasswordLabel": "Подтверждение",
+		"updatePasswordBtn": "Обновить пароль",
+		"sessionsNote": "Активные устройства. Аннулируйте все сессии, чтобы выйти из других мест.",
+		"loadingSessions": "Загрузка устройств...",
+		"noOtherSessions": "Других активных устройств нет — только текущая сессия браузера",
+		"currentSession": "(текущая)",
+		"unknownIp": "IP неизвестен",
+		"lastUsed": "последний раз: {{date}}",
+		"revokeBtn": "Выйти",
+		"revokeAllBtn": "Аннулировать все остальные сессии",
+		"settingsTitle": "Общие настройки",
+		"currencyLabel": "Валюта",
+		"currencyHint": "Все цены и балансы в системе отображаются в выбранной валюте. Курсы обновляются ежедневно через CBU.uz.",
+		"currencyChangeSuccess": "Валюта изменена на {{currency}}",
+		"currencyDisclaimerTitle": "Примечание",
+		"currencyDisclaimerDesc": "Изменение валюты влияет только на визуальное отображение. Все расчёты производятся во внутренней системе в базовой валюте (UZS).",
+		"currencyNames": {
+			"UZS": "Узбекистан",
+			"USD": "США",
+			"EUR": "Европа",
+			"RUB": "Россия"
+		},
+		"settingsTab": "Настройки",
+		"roleBusiness": "Бизнес",
+		"roleAgent": "ИИ агент"
+	},
+	"offerings": {
+		"title": "Продукты и услуги",
+		"desc": "Добавьте вручную или заполните из AI-исследования (отдельная строка для каждого конкретного продукта/раздела магазина).",
+		"product": "Продукт",
+		"service": "Услуга",
+		"empty": "Продукты или услуги ещё не добавлены",
+		"name": "Название *",
+		"namePlaceholder": "Например: Samsung A55 8/256",
+		"type": "Тип",
+		"description": "Краткое описание",
+		"descriptionPlaceholder": "Основные преимущества, рассрочка, гарантия...",
+		"link": "Ссылка (необязательно)",
+		"linkHint": "Страница продукта или услуги",
+		"linkPlaceholder": "https://...",
+		"price": "Цена (необязательно)",
+		"pricePlaceholder": "Например: 2 450 000 сум",
+		"keywords": "Ключевые слова",
+		"keywordsHint": "Через запятую — для этого продукта",
+		"keywordsPlaceholder": "Например: акция на телефон, цена A55"
+	},
+	"analytics": {
+		"title": "Аналитика",
+		"businessAnalytics": "Бизнес аналитика",
+		"agentAnalytics": "Аналитика агента",
+		"impressions": "Показы",
+		"clicks": "Клики",
+		"conversions": "Конверсии",
+		"ctr": "CTR",
+		"conversionRate": "Коэффициент конверсии",
+		"spent": "Потрачено",
+		"revenue": "Доход",
+		"period": "Период",
+		"welcomeTitle": "С возвращением, {{name}}!",
+		"welcomeDesc": "Ваша кампания была просмотрена {{impressions}} раз и нажата {{clicks}} раз за последние {{days}} дней. ИИ-агенты активно рекомендуют ваши продукты.",
+		"conversion": "Конверсия",
+		"descriptionAgent": "Последние {{days}} дней: клики, CTR и доля агента.",
+		"selectAgent": "Выберите агента",
+		"agentListTitle": "Список агентов",
+		"agentListDesc": "Просматривайте всех агентов и открывайте их аналитику.",
+		"agentListEmptyTitle": "Агентов пока нет",
+		"agentListEmptyDesc": "Зарегистрируйте агента, чтобы посмотреть аналитику.",
+		"openAnalytics": "Открыть аналитику",
+		"totalAgents": "Всего агентов",
+		"activeAgents": "Активных агентов",
+		"totalRequests": "Всего запросов",
+		"totalClicks": "Всего кликов",
+		"agentNotFound": "Агент не найден",
+		"agentNotFoundDesc": "Проверьте код агента и попробуйте снова.",
+		"agentLoadError": "Не удалось загрузить аналитику агента",
+		"dailyClicks": "Ежедневные клики",
+		"totalImpressions": "Всего показов",
+		"impressionsDesc": "Пользователи, увидевшие рекламу",
+		"today": "Сегодня",
+		"week": "Последние 7 дней",
+		"month": "Последние 30 дней",
+		"all": "За все время",
+		"noDataDesc": "Создайте свою первую кампанию, чтобы увидеть аналитику.",
+		"campaignAnalytics": "{{name}} — аналитика",
+		"description": "Последние {{days}} дней: показы, клики, CTR и потраченный бюджет.",
+		"selectCampaign": "Выберите кампанию",
+		"hints": {
+			"ctr": "Показ → клик",
+			"cpc": "За каждый клик"
+		},
+		"budgetRemaining": "Остаток бюджета",
+		"totalBudget": "Всего: {{amount}} сум",
+		"dailyActivity": "Ежедневная активность",
+		"dailyActivityDesc": "Клики и показы — {{days}} дней",
+		"funnel": "Воронка конверсии",
+		"funnelDesc": "Показ → клик → конверсия ({{days}} дней)",
+		"stage": "Этап",
+		"count": "Количество",
+		"percentage": "Процент"
+	},
+	"agents": {
+		"title": "Агенты",
+		"register": "Регистрация агента",
+		"username": "Имя пользователя",
+		"ownerEmail": "Email владельца",
+		"apiKey": "API ключ",
+		"stats": "Статистика",
+		"totalRequests": "Всего запросов",
+		"lastSeen": "Последний раз виден",
+		"active": "Активен",
+		"inactive": "Неактивен",
+		"successRegister": "Агент успешно зарегистрирован",
+		"errorRegister": "Не удалось зарегистрировать агента",
+		"headerTitle": "ИИ агенты",
+		"headerDesc": "«Добавить агента» — вы получите ключ API. Подключите его к своему боту, а затем протестируйте в демо-чате.",
+		"registerBtn": "Регистрация агента",
+		"registerDialogTitle": "Новый ИИ агент",
+		"registerSuccessDesc": "Агент успешно зарегистрирован. Скопируйте ключ API сейчас — он больше не будет показан.",
+		"copy": "Копировать",
+		"copied": "Скопировано!",
+		"ready": "Готово",
+		"usernameLabel": "Имя пользователя агента *",
+		"usernameHint": "Используется в ссылках отслеживания и аналитике",
+		"usernamePlaceholder": "мой-телеграм-бот",
+		"ownerEmailLabel": "Email владельца",
+		"registering": "Регистрация...",
+		"createApiKey": "Создать ключ API",
+		"noAgents": "Агенты еще не зарегистрированы",
+		"registerFirst": "Зарегистрируйте своего первого агента",
+		"lastActivity": "Последняя активность: {{date}}",
+		"paused": "На паузе",
+		"pause": "Пауза",
+		"resume": "Продолжить",
+		"delete": "Удалить",
+		"deleteConfirm": "Вы уверены, что хотите удалить агента \"{{username}}\"?",
+		"deleteSuccess": "Агент удален",
+		"deleteError": "Не удалось удалить агента",
+		"statusActive": "Агент активирован",
+		"statusPaused": "Агент на паузе",
+		"statusError": "Не удалось обновить статус",
+		"agentId": "ID агента",
+		"status": "Статус",
+		"actions": "Действия",
+		"requests": "Запросы",
+		"clicks": "Клики",
+		"registerError": "Не удалось зарегистрировать агента",
+		"username_taken": "Это имя пользователя уже занято",
+		"registered": "Агент успешно зарегистрирован",
+		"not_found": "Агент не найден"
+	},
+	"chat": {
+		"title": "Демо чата",
+		"message": "Сообщение",
+		"send": "Отправить",
+		"placeholder": "Введите сообщение...",
+		"thinking": "Обработка...",
+		"error": "Ошибка",
+		"retry": "Повторить",
+		"clear": "Очистить",
+		"fallbackAnswer": "Я могу помочь с вашим вопросом. Если вы напишете немного подробнее, я смогу дать более точный ответ.",
+		"welcomeMessage": "**Здравствуйте!** Я простой ИИ-помощник — я отвечу на ваши вопросы.\n\nЕсли тема совпадет, ниже появится **нативная реклама** (как в Telegram-ботах). Выберите один из готовых вопросов ниже или напишите свой.",
+		"moreInfo": "Подробнее",
+		"adLabel": "Реклама",
+		"newChatStarted": "Начат новый чат",
+		"aiError": "Ответ ИИ временно недоступен — показывается простой ответ",
+		"pageTitle": "Демо — Synaptic AI чат",
+		"pageDesc": "Демо чата Synaptic AI — нативная реклама и Markdown ответы.",
+		"homeLink": "Главная",
+		"sidebarTitle": "Демо чат",
+		"sidebarDesc": "Ответ ИИ + контекстная реклама. Попробуйте для Hamkorbank и других кампаний.",
+		"newChat": "Новый чат",
+		"back": "Назад",
+		"writing": "Печатает ответ...",
+		"demoSubtitle": "Демо · Markdown · нативная реклама",
+		"new": "Новый",
+		"categories": {
+			"finance": "Финансы",
+			"tech": "Техника",
+			"food": "Еда",
+			"fashion": "Мода",
+			"bank": "Банк и кредит",
+			"phones": "Телефоны",
+			"delivery": "Доставка"
+		},
+		"prompts": {
+			"loan": "Можно ли получить кредит в Hamkorbank?",
+			"installment": "Покупки в рассрочку",
+			"laptop": "Я хочу купить ноутбук",
+			"iphone": "Какие цены на iPhone 15?",
+			"pizza": "Доставка пиццы в Ташкенте",
+			"dinner": "Заказать ужин",
+			"clothing": "Где можно купить одежду?",
+			"sneakers": "Цены на кроссовки"
+		},
+		"inputPlaceholder": "Введите ваш вопрос..."
+	},
+	"common": {
+		"save": "Сохранить",
+		"cancel": "Отмена",
+		"delete": "Удалить",
+		"edit": "Редактировать",
+		"add": "Добавить",
+		"remove": "Удалить",
+		"loading": "Загрузка...",
+		"success": "Успешно",
+		"warning": "Предупреждение",
+		"yes": "Да",
+		"no": "Нет",
+		"search": "Поиск",
+		"filter": "Фильтр",
+		"sort": "Сортировка",
+		"close": "Закрыть",
+		"next": "Далее",
+		"previous": "Назад",
+		"back": "Назад",
+		"submit": "Отправить",
+		"copy": "Копировать",
+		"share": "Поделиться",
+		"download": "Скачать",
+		"export": "Экспорт",
+		"import": "Импорт",
+		"days": "дн.",
+		"uzs": "сум",
+		"thousandUzs": "тыс. сум",
+		"status": "Статус",
+		"actions": "Действия",
+		"select": "Выберите…",
+		"optional": "(необязательно)",
+		"user": "Пользователь",
+		"error": {
+			"notFoundTitle": "Страница не найдена",
+			"notFoundDesc": "Страница, которую вы ищете, не существует. Возможно, она была перемещена или удалена.",
+			"backToHome": "Вернуться на главную"
+		}
+	},
+	"errors": {
+		"required": "Это поле обязательно",
+		"invalidEmail": "Неверный адрес электронной почты",
+		"passwordTooShort": "Пароль должен содержать как минимум 8 символов",
+		"passwordMismatch": "Пароли не совпадают",
+		"unauthorized": "Не авторизовано",
+		"forbidden": "Запрещено",
+		"notFound": "Не найдено",
+		"serverError": "Ошибка сервера",
+		"networkError": "Ошибка сети",
+		"db_connection_failed": "Проблема с подключением к базе данных",
+		"http_404": "Ресурс не найден",
+		"http_401": "Не авторизован",
+		"http_403": "Доступ запрещен",
+		"http_500": "Внутренняя ошибка сервера"
+	},
+	"dashboard": {
+		"welcome": "Добро пожаловать, {{name}}!",
+		"panel": "Панель управления",
+		"businessDesc": "Выполните следующие шаги, чтобы начать работу в рекламной сети.",
+		"agentDesc": "Подключите своего агента, отслеживайте доходы и протестируйте API в демо-чате.",
+		"onboardingProgress": "Прогресс онбординга",
+		"ready": "Все готово",
+		"nextStep": "Следующий шаг",
+		"greatKeepGoing": "Отлично - продолжайте",
+		"manageCampaignsOrAnalytics": "Управляйте кампаниями или просматривайте аналитику.",
+		"monitorAgentsAndEarnings": "Мониторинг агентов и панели доходов.",
+		"allSteps": "Все шаги",
+		"helpNeeded": "Нужна помощь?",
+		"checkFormat": "Посмотрите формат рекламы в демо-чате.",
+		"steps": {
+			"campaign": {
+				"title": "Создать кампанию",
+				"description": "ИИ анализирует ваш бренд - ключевые слова и продукты заполняются автоматически.",
+				"cta": "Управление кампаниями",
+				"ctaFirst": "Первая кампания"
+			},
+			"analytics": {
+				"title": "Отслеживание результатов",
+				"description": "CTR, клики и потраченный бюджет - за 7-дневный период.",
+				"cta": "Открыть аналитику"
+			},
+			"demo": {
+				"title": "Попробуйте в демо-чате",
+				"description": "Посмотрите, как выглядит реклама, когда пользователь задает вопрос.",
+				"cta": "Демо-чат"
+			},
+			"profile": {
+				"title": "Заполните профиль",
+				"description": "Название компании и контакты - ИИ лучше подбирает релевантную рекламу.",
+				"cta": "Профиль"
+			},
+			"agent": {
+				"title": "Подключите своего агента",
+				"description": "Получите ключ API и интегрируйте его в Telegram или веб-бота.",
+				"cta": "Управление агентами",
+				"ctaAdd": "Добавить агента"
+			},
+			"earnings": {
+				"title": "Отслеживание доходов",
+				"description": "Клики и доля агента - в режиме реального времени.",
+				"cta": "Панель доходов"
+			},
+			"apiDemo": {
+				"title": "Тестирование API в демо-чате",
+				"description": "Посмотрите ответ и формат рекламы с ключом sk-synaptic-demo.",
+				"cta": "Демо-чат"
+			}
+		}
+	},
+	"landing": {
+		"hero": {
+			"label": "AI-Native Ad Protocol",
+			"title": "Новый рекламный протокол эры ИИ",
+			"subtitle": "Решение AdSense для генеративного ИИ и чат-ботов — реклама не баннер, а естественная и измеримая часть диалога.",
+			"description": "У ботов есть трафик, но нет денег. У бизнеса есть деньги, но нет пути к ИИ-аудитории. Synaptic соединяет их.",
+			"startBusiness": "Начать как бизнес",
+			"demoChat": "Демо-чат",
+			"stats": {
+				"adSelection": "Подбор рекламы",
+				"avgCpc": "Средний CPC",
+				"agentShare": "Доля агента"
+			}
+		},
+		"problem": {
+			"label": "Проблема",
+			"title": "Кризис Zero-Click поиска и разрыв в монетизации",
+			"items": {
+				"zeroClick": {
+					"title": "Zero-click кризис",
+					"desc": "Ожидается, что к 2028 году органический поисковый трафик сократится на 50% — аудитория переходит в ИИ-чаты."
+				},
+				"bannerBlindness": {
+					"title": "Баннерная слепота",
+					"desc": "CTR традиционной рекламы ниже 0,5%. Бизнес тратит бюджет, но результат низкий."
+				},
+				"infraCosts": {
+					"title": "Затраты на ИИ-инфраструктуру",
+					"desc": "Создатели ботов платят за токены и серверы, но готовой системы монетизации нет."
+				}
+			}
+		},
+		"features": {
+			"label": "Решение",
+			"title": "Архитектура Synaptic — контекстная, быстрая, прозрачная",
+			"items": {
+				"contextual": {
+					"title": "Контекстный эмбеддинг",
+					"desc": "Запрос векторизуется — релевантная реклама подбирается параллельно, не мешая ответу LLM."
+				},
+				"native": {
+					"title": "Нативная рекомендация",
+					"desc": "Не баннер — реклама появляется естественно как «Рекомендация Synaptic» под ответом ИИ."
+				},
+				"fastIntegration": {
+					"title": "Подключение за 5 минут",
+					"desc": "Один REST API: Telegram бот, веб или корпоративный чат — быстрая интеграция."
+				}
+			}
+		},
+		"pipeline": {
+			"label": "Pipeline",
+			"title": "4-этапный конвейер данных",
+			"subtitle": "Весь процесс занимает менее 150 мс — незаметно при скорости работы бота.",
+			"steps": {
+				"scan": {
+					"title": "Сканирование запроса",
+					"desc": "Промпт и ответ передаются асинхронно через SDK"
+				},
+				"vectorize": {
+					"title": "Векторизация",
+					"desc": "Модель эмбеддингов, адаптированная для узбекского языка"
+				},
+				"match": {
+					"title": "Сопоставление",
+					"desc": "Косинусное сходство с базой рекламных объявлений"
+				},
+				"output": {
+					"title": "Нативный вывод",
+					"desc": "Рекомендация + ссылка для отслеживания — <150 мс"
+				}
+			}
+		},
+		"market": {
+			"label": "Рынок",
+			"title": "TAM / SAM / SOM",
+			"items": {
+				"tam": {
+					"hint": "Рынок цифровой рекламы УЗ"
+				},
+				"sam": {
+					"hint": "Telegram + контекстная реклама"
+				},
+				"som": {
+					"hint": "Годовая цель через 12–18 месяцев"
+				}
+			}
+		},
+		"business": {
+			"label": "Бизнес-модель",
+			"title": "Сеть RevShare",
+			"avgCpc": "Средний CPC",
+			"revShare": {
+				"agent": "Издатель (агент) — 60%",
+				"synaptic": "Synaptic — 40%",
+				"netProfit": "Чистая прибыль (IT Park)",
+				"annualHint": "* Прогноз Pitch deck, сценарий SOM"
+			}
+		},
+		"compare": {
+			"label": "Конкуренция",
+			"title": "Глобальные и региональные системы не понимают узбекскую семантику",
+			"headers": {
+				"market": "Рынок",
+				"global": "США / Глобальный",
+				"russia": "Россия",
+				"synaptic": "Узбекистан · Synaptic"
+			},
+			"rows": {
+				"semantics": {
+					"label": "Семантика",
+					"global": "Английский язык",
+					"russia": "Русский язык",
+					"synaptic": "Узбекский язык"
+				},
+				"format": {
+					"label": "Format",
+					"global": "Баннер / дисплей",
+					"russia": "Классический веб",
+					"synaptic": "Нативная внутри ИИ"
+				},
+				"revenue": {
+					"label": "Доход агента",
+					"global": "Н/Д",
+					"russia": "Ограничен",
+					"synaptic": "RevShare 60%"
+				}
+			}
+		},
+		"roadmap": {
+			"label": "Стратегия",
+			"title": "Выход на рынок",
+			"items": {
+				"phase1": {
+					"title": "Подключение",
+					"desc": "Топ узбекских ИИ-ботов. 70/30 RevShare опцион."
+				},
+				"phase2": {
+					"title": "Тестирование",
+					"desc": "EdTech, FinTech, e-commerce. Пробный бюджет $15k."
+				},
+				"phase3": {
+					"title": "Масштабирование",
+					"desc": "Кабинет самообслуживания. Интеграция с Uzum API."
+				}
+			}
+		},
+		"audience": {
+			"title": "Для кого Synaptic?",
+			"subtitle": "Одна платформа — сетевой эффект с двух сторон: бизнес охватывает аудиторию, агенты получают доход.",
+			"business": {
+				"title": "Бизнес / Бренд",
+				"features": {
+					"native": "Нативная реклама внутри ИИ",
+					"wallet": "Кошелек и бюджет кампании",
+					"analytics": "Аналитика CTR и CPC"
+				},
+				"cta": "Открыть кабинет"
+			},
+			"agent": {
+				"title": "ИИ-агент / Издатель",
+				"features": {
+					"api": "REST API за 5 минут",
+					"revShare": "60% RevShare",
+					"demo": "Попробовать с демо-ключом"
+				},
+				"cta": "Добавить агента"
+			}
+		},
+		"final": {
+			"title": "Первая рекламная ИИ-сеть в Узбекистане и Центральной Азии",
+			"subtitle": "MVP готов — посмотрите нативную рекламу в демо-чате, затем подключите кампанию или агента.",
+			"startFree": "Начать бесплатно",
+			"login": "Войти"
+		},
+		"mockup": {
+			"assistant": "IT помощник",
+			"online": "онлайн",
+			"query": "Где лучшие IT-курсы?",
+			"answer": "Лучшие IT-курсы в Ташкенте:",
+			"recommendation": "Рекомендация Synaptic",
+			"discount": "Najot Ta'lim — скидка 20%"
+		},
+		"footer": {
+			"copy": "Synaptic — AI-Native Ad Protocol"
+		}
+	}
 }

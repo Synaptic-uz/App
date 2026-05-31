@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api, clearAuthSession, getStoredToken, getStoredRefreshToken, persistAuthSession } from '../../lib/api';
+import { api, clearAuthSession, getStoredToken, persistAuthSession } from '../../lib/api';
 import { AuthContext, type AuthUser } from './auth-context';
 
 export { useAuth } from './auth-context';
@@ -54,13 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { user: me } = await api.me();
         applySession(savedToken, me);
       } catch {
-        if (getStoredRefreshToken()) {
-          await refreshSession();
-        } else {
-          clearAuthSession();
-          setToken(null);
-          setUser(null);
-        }
+        // `api.me()` already attempts one refresh on 401/403.
+        // If bootstrap still lands here, treat the session as invalid and clear it.
+        clearAuthSession();
+        setToken(null);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }

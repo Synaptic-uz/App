@@ -40,8 +40,8 @@ def build_tracking_url(base_url: str, tracking_code: str, agent_username: str | 
         return None
     base = base_url.rstrip("/")
     q = f"?a={agent_username}" if agent_username else ""
-    return f"{base}/t/{tracking_code}{q}"
+    return f"{base}/api/t/{tracking_code}{q}"
 
 
 def build_display_path(tracking_code: str) -> str | None:
-    return f"/t/{tracking_code}" if tracking_code else None
+    return f"/api/t/{tracking_code}" if tracking_code else None

@@ -1,0 +1,21 @@
+{
+  "email_already_registered": "Bu email allaqachon ro‘yxatdan o‘tgan",
+  "db_connection_failed": "Ma’lumotlar bazasiga ulanib bo‘lmadi. Serverni qayta ishga tushiring.",
+  "registration_failed": "Ro‘yxatdan o‘tish muvaffaqiyatsiz",
+  "invalid_credentials": "Email yoki parol noto‘g‘ri",
+  "user_not_found": "Foydalanuvchi topilmadi",
+  "profile_update_failed": "Profil yangilanmadi",
+  "password_too_short": "Yangi parol kamida 6 belgidan iborat bo‘lishi kerak",
+  "current_password_incorrect": "Joriy parol noto‘g‘ri",
+  "refresh_token_required": "Refresh token talab qilinadi",
+  "refresh_token_expired": "Refresh token muddati tugagan",
+  "refresh_token_invalid": "Refresh token yaroqsiz",
+  "logout_success": "Muvaffaqiyatli chiqildi",
+  "session_revoke_current_error": "Joriy sessiyani bu yerda emas, chiqish tugmasidan foydalaning",
+  "success": "Muvaffaqiyatli",
+  "error": "Xatolik",
+  "username_taken": "Bu foydalanuvchi nomi band",
+  "agent_not_found": "Agent topilmadi",
+  "agent_registered": "Agent ro‘yxatdan o‘tdi. API kalitini saqlang — keyin ko‘rsatilmaydi.",
+  "deposit_test_mode_only": "To‘ldirish hozircha faqat test rejimida (ALLOW_MOCK_DEPOSIT=1)"
+}

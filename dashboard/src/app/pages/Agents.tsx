@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { Plus, CheckCircle2, XCircle, Copy, Check, Pause, Play, Trash2 } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, Copy, Check, Pause, Play, Trash2, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Skeleton } from '../components/ui/skeleton';
 import {
@@ -17,6 +17,7 @@ import {
   PageHeader,
   BackLink,
   AppButton,
+  AppLinkButton,
   Alert,
   Badge,
   FormField,
@@ -119,6 +120,15 @@ export default function Agents() {
   function renderAgentActions(agent: { _id: string; username: string; active: boolean }) {
     return (
       <>
+        <AppLinkButton
+          to={`/agent/${encodeURIComponent(agent.username)}/analytics`}
+          variant="secondary"
+          size="sm"
+          className="gap-1.5"
+        >
+          <BarChart3 className="w-4 h-4" />
+          {t('analytics.openAnalytics')}
+        </AppLinkButton>
         <IconButton
           label={agent.active ? t('agents.pause') : t('agents.resume')}
           onClick={() => handleToggleActive(agent)}
@@ -232,15 +242,18 @@ export default function Agents() {
                   date: new Date(agent.last_seen || agent.updatedAt).toLocaleDateString(currentLocale) 
                 })}
                 badges={
-                  agent.active ? (
-                    <Badge variant="success">
-                      <CheckCircle2 className="w-3 h-3" /> {t('agents.active')}
-                    </Badge>
-                  ) : (
-                    <Badge variant="danger">
-                      <XCircle className="w-3 h-3" /> {t('agents.paused')}
-                    </Badge>
-                  )
+                  <>
+                    {agent.active ? (
+                      <Badge variant="success">
+                        <CheckCircle2 className="w-3 h-3" /> {t('agents.active')}
+                      </Badge>
+                    ) : (
+                      <Badge variant="danger">
+                        <XCircle className="w-3 h-3" /> {t('agents.paused')}
+                      </Badge>
+                    )}
+                    <Badge variant="neutral">{t('analytics.openAnalytics')}</Badge>
+                  </>
                 }
                 actions={renderAgentActions(agent)}
               />

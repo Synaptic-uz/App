@@ -11,8 +11,9 @@ from app.core.deps import AuthUser, get_current_user
 from app.db.mongo import get_db
 from app.services.campaign_cache import credit_agent_revenue, increment_campaign_click, increment_campaign_impression
 from app.services.ranking import record_click
+from app.utils.response import AppResponse, AppException
 
-router = APIRouter(tags=["analytics"])
+router = APIRouter(prefix="/api", tags=["analytics"])
 
 METRICS_DAYS = 7
 _analytics_cache: dict = {"data": None, "ts": 0}
@@ -57,7 +58,7 @@ def _format_daily(daily_stats: list) -> list:
     return list(formatted.values())
 
 
-@router.get("/api/analytics")
+@router.get("/analytics")
 async def analytics():
     global _analytics_cache
     if _analytics_cache["data"] and time.time() * 1000 - _analytics_cache["ts"] < 10_000:
@@ -117,10 +118,10 @@ async def analytics():
         },
     }
     _analytics_cache = {"data": result, "ts": time.time() * 1000}
-    return result
+    return AppResponse.success(result)
 
 
-@router.get("/api/intent-stats")
+@router.get("/intent-stats")
 async def intent_stats():
     db = get_db()
     dist = await db.sessions.aggregate([{"$group": {"_id": "$intent_type", "count": {"$sum": 1}}}]).to_list(20)
@@ -138,19 +139,19 @@ async def intent_stats():
             {"$limit": 10},
         ]
     ).to_list(10)
-    return {
+    return AppResponse.success({
         "intent_distribution": dist,
         "hourly_pattern": hourly,
         "top_categories": top,
-    }
+    })
 
 
-@router.get("/api/dashboard/{campaign_id}")
+@router.get("/dashboard/{campaign_id}")
 async def campaign_dashboard(campaign_id: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     db = get_db()
     campaign = await db.campaigns.find_one({"_id": oid(campaign_id), "owner_id": oid(user.id)})
     if not campaign:
-        raise HTTPException(404, "Kampaniya topilmadi")
+        raise AppException("campaigns.not_found", http_status=404)
 
     since = _period_start()
     totals7d = await _aggregate_campaign_events(campaign_id, since)
@@ -174,7 +175,7 @@ async def campaign_dashboard(campaign_id: str, user: Annotated[AuthUser, Depends
 
     budget = float(campaign.get("budget") or 0)
     spent = float(campaign.get("spent") or 0)
-    return {
+    return AppResponse.success({
         "period_days": METRICS_DAYS,
         "campaign": {
             "id": str(campaign["_id"]),
@@ -193,17 +194,17 @@ async def campaign_dashboard(campaign_id: str, user: Annotated[AuthUser, Depends
         "totals": {**totals7d, **spend7d},
         "totals_all_time": totals_all,
         "daily_stats": _format_daily(daily),
-    }
+    })
 
 
-@router.get("/api/agents/{username}/stats")
+@router.get("/agents/{username}/stats")
 async def agent_stats(username: str, user: Annotated[AuthUser, Depends(get_current_user)]):
     db = get_db()
     agent = await db.agents.find_one({"username": username})
     if not agent:
-        raise HTTPException(404, "Agent topilmadi")
+        raise AppException("agents.not_found", http_status=404)
     if agent.get("owner_id") and str(agent["owner_id"]) != user.id:
-        raise HTTPException(403, "Ushbu agentga kirish huquqi yo‘q")
+        raise AppException("errors.forbidden", http_status=403)
 
     since = _period_start()
     match7 = {"agent_id": username, "createdAt": {"$gte": since}}
@@ -236,16 +237,16 @@ async def agent_stats(username: str, user: Annotated[AuthUser, Depends(get_curre
     ).to_list(500)
 
     agent.pop("api_key_hash", None)
-    return {
+    return AppResponse.success({
         "agent": serialize_doc(agent),
         "period_days": METRICS_DAYS,
         "totals": {**totals7d, "revenue_earned": agent.get("revenue_earned") or 0},
         "totals_all_time": totals_all,
         "daily_stats": _format_daily(daily),
-    }
+    })
 
 
-@router.get("/api/sessions")
+@router.get("/sessions")
 async def chat_sessions(limit: int = Query(50), intent_type: str | None = None):
     filt = {}
     if intent_type:
@@ -254,7 +255,7 @@ async def chat_sessions(limit: int = Query(50), intent_type: str | None = None):
     rows = []
     async for doc in cursor:
         rows.append(doc)
-    return serialize_many(rows)
+    return AppResponse.success(serialize_many(rows))
 
 
 @router.get("/t/{code}")
@@ -285,7 +286,7 @@ async def tracking_click(code: str, a: str | None = None):
     return RedirectResponse(dest, status_code=302)
 
 
-@router.post("/api/conversion")
+@router.post("/conversion")
 async def conversion(body: dict):
     session_id = body.get("session_id")
     campaign_id = body.get("campaign_id")
@@ -312,4 +313,4 @@ async def conversion(body: dict):
         }
     )
     await db.campaigns.update_one({"_id": campaign["_id"]}, {"$inc": {"spent": max(0, cpa)}})
-    return {"success": True, "cpa_earned": cpa, "cpa_percentage": pct}
+    return AppResponse.success({"cpa_earned": cpa, "cpa_percentage": pct}, status_code="analytics.conversion_recorded")

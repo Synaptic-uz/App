@@ -8,10 +8,11 @@ from app.db.mongo import get_db, is_db_connected
 from app.services.conversation import build_matching_prompt
 from app.services.matcher import find_best_campaign
 from app.services.ranking import sync_campaign_stats
-from app.utils.timing import timed_async, timed_async
+from app.utils.response import AppException
+from app.utils.timing import timed_async
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/ai", tags=["ai"])
+router = APIRouter(prefix="/api/match", tags=["ai"])
 
 
 class MatchRequest(BaseModel):
@@ -46,10 +47,10 @@ async def _load_active_campaigns() -> list[dict]:
     return campaigns
 
 
-@router.post("/match", response_model=MatchResponse)
+@router.post("", response_model=MatchResponse)
 async def match_campaign(body: MatchRequest):
     if not is_db_connected():
-        raise HTTPException(status_code=503, detail="Database not connected")
+        raise AppException("error.db_connection_failed", http_status=503)
 
     prompt_preview = body.prompt[:60].replace("\n", " ")
 

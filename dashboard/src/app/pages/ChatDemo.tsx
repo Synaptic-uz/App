@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import {
   Send,
   Bot,
@@ -39,32 +40,6 @@ const MAX_INPUT_HEIGHT = 140;
 const SESSION_KEY = 'synaptic_demo_session_id';
 const DEMO_API_KEY = 'sk-synaptic-demo';
 
-const FALLBACK_ANSWER =
-  "Savolingiz bo'yicha yordam bera olaman. Biroz batafsil yozsangiz, aniqroq javob beraman.";
-
-const PROMPT_GROUPS = [
-  {
-    title: 'Moliya',
-    icon: CreditCard,
-    prompts: ['Hamkorbankdan kredit olish mumkinmi?', 'Muddatli to‘lov bilan xarid qilish'],
-  },
-  {
-    title: 'Texnika',
-    icon: Laptop,
-    prompts: ['Noutbuk sotib olmoqchiman', 'iPhone 15 narxlari qancha?'],
-  },
-  {
-    title: 'Ovqat',
-    icon: Coffee,
-    prompts: ['Toshkentda pizza yetkazib berish', 'Kechki ovqat buyurtma qilish'],
-  },
-  {
-    title: 'Moda',
-    icon: Shirt,
-    prompts: ['Kiyim-kechak qayerdan olsam bo‘ladi?', 'Krossovka narxlari'],
-  },
-];
-
 function getDemoApiKey(): string {
   return import.meta.env.VITE_DEMO_API_KEY || localStorage.getItem('synaptic_demo_api_key') || DEMO_API_KEY;
 }
@@ -97,14 +72,9 @@ function toApiHistory(messages: Message[]) {
   }));
 }
 
-const WELCOME_MESSAGE: Message = {
-  id: 'welcome',
-  sender: 'bot',
-  text: '**Assalomu alaykum!** Men oddiy AI yordamchiman — savolingizga javob beraman.\n\nAgar mavzu mos kelsa, pastda **tabiiy reklama** paydo bo‘ladi (xuddi Telegram botlardagi kabi). Quyidagi tayyor savollardan birini tanlang yoki o‘zingiz yozing.',
-};
-
 function buildBotMessage(
   answer: string,
+  defaultCtaLabel: string,
   sponsored?: {
     suggestion: string;
     tracking_url?: string;
@@ -123,7 +93,7 @@ function buildBotMessage(
       match: true,
       suggestion: sponsored.suggestion,
       tracking_url: sponsored.tracking_url,
-      cta_label: sponsored.cta_label || 'Batafsil',
+      cta_label: sponsored.cta_label || defaultCtaLabel,
       campaign_name: sponsored.campaign_name,
       category_label: sponsored.category_label,
     },
@@ -131,7 +101,37 @@ function buildBotMessage(
 }
 
 export default function ChatDemo() {
-  const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+  const { t } = useTranslation();
+  const welcomeMessage = {
+    id: 'welcome',
+    sender: 'bot',
+    text: t('chat.welcomeMessage'),
+  } satisfies Message;
+  const fallbackAnswer = t('chat.fallbackAnswer');
+  const promptGroups = [
+    {
+      title: t('chat.categories.finance'),
+      icon: CreditCard,
+      prompts: [t('chat.prompts.loan'), t('chat.prompts.installment')],
+    },
+    {
+      title: t('chat.categories.tech'),
+      icon: Laptop,
+      prompts: [t('chat.prompts.laptop'), t('chat.prompts.iphone')],
+    },
+    {
+      title: t('chat.categories.food'),
+      icon: Coffee,
+      prompts: [t('chat.prompts.pizza'), t('chat.prompts.dinner')],
+    },
+    {
+      title: t('chat.categories.fashion'),
+      icon: Shirt,
+      prompts: [t('chat.prompts.clothing'), t('chat.prompts.sneakers')],
+    },
+  ];
+
+  const [messages, setMessages] = useState<Message[]>([welcomeMessage]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -165,9 +165,9 @@ export default function ChatDemo() {
 
   const resetChat = () => {
     sessionIdRef.current = newSessionId();
-    setMessages([WELCOME_MESSAGE]);
+    setMessages([welcomeMessage]);
     setInput('');
-    toast.success('Yangi suhbat boshlandi');
+    toast.success(t('chat.newChatStarted'));
   };
 
   const sendMessage = async (userText: string) => {
@@ -188,7 +188,7 @@ export default function ChatDemo() {
     setIsTyping(true);
 
     try {
-      let answer = FALLBACK_ANSWER;
+      let answer = fallbackAnswer;
       try {
         const enrich = await api.enrich(userText, {
           answerOnly: true,
@@ -198,7 +198,7 @@ export default function ChatDemo() {
         });
         if (enrich?.text) answer = enrich.text;
       } catch {
-        toast.error('AI javob vaqtincha ishlamadi — oddiy javob ko‘rsatilmoqda');
+        toast.error(t('chat.aiError'));
       }
 
       let sponsored:
@@ -234,7 +234,7 @@ export default function ChatDemo() {
         /* reklama ixtiyoriy */
       }
 
-      const { text, ad } = buildBotMessage(answer, sponsored);
+      const { text, ad } = buildBotMessage(answer, t('chat.moreInfo'), sponsored);
       setMessages((prev) => [
         ...prev,
         { id: (Date.now() + 1).toString(), sender: 'bot', text, ad },
@@ -258,10 +258,10 @@ export default function ChatDemo() {
   return (
     <div className="flex flex-1 min-h-0 h-full bg-[var(--color-bg-subtle)]">
       <Helmet>
-        <title>Demo — Synaptic AI chat</title>
+        <title>{t('chat.pageTitle')}</title>
         <meta
           name="description"
-          content="Synaptic AI chat demo — tabiiy reklama va Markdown javoblar."
+          content={t('chat.pageDesc')}
         />
       </Helmet>
 
@@ -271,17 +271,18 @@ export default function ChatDemo() {
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors mb-4"
+            aria-label={t('chat.back')}
           >
             <ArrowLeft className="w-4 h-4" />
-            Bosh sahifa
+            {t('chat.homeLink')}
           </Link>
-          <h2 className="text-lg font-bold text-[var(--color-text)]">Demo suhbat</h2>
+          <h2 className="text-lg font-bold text-[var(--color-text)]">{t('chat.sidebarTitle')}</h2>
           <p className="text-xs text-[var(--color-text-secondary)] mt-1 leading-relaxed">
-            AI javob + kontekst bo‘yicha reklama. Hamkorbank va boshqa kampaniyalar uchun sinab ko‘ring.
+            {t('chat.sidebarDesc')}
           </p>
         </div>
         <div className="synaptic-scroll flex-1 overflow-y-auto p-3 space-y-4" data-scrollable="true">
-          {PROMPT_GROUPS.map((group) => (
+          {promptGroups.map((group) => (
             <div key={group.title}>
               <div className="flex items-center gap-2 px-1 mb-2 text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
                 <group.icon className="w-3.5 h-3.5" />
@@ -310,7 +311,7 @@ export default function ChatDemo() {
             className="w-full flex items-center justify-center gap-2 min-h-11 rounded-[var(--radius-md)] border border-[var(--color-border-strong)] text-sm font-semibold text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
-            Yangi suhbat
+            {t('chat.newChat')}
           </button>
         </div>
       </aside>
@@ -329,7 +330,7 @@ export default function ChatDemo() {
           <Link
             to="/"
             className="md:hidden flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-subtle)]"
-            aria-label="Orqaga"
+            aria-label={t('chat.back')}
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -340,7 +341,7 @@ export default function ChatDemo() {
           <div className="min-w-0 flex-1">
             <h1 className="font-bold text-[var(--color-text)] leading-tight">Synaptic AI</h1>
             <p className="text-xs text-[var(--color-text-secondary)]">
-              {isTyping ? 'Javob yozilmoqda…' : 'Demo · Markdown · nativ reklama'}
+              {isTyping ? t('chat.writing') : t('chat.demoSubtitle')}
             </p>
           </div>
           <button
@@ -349,7 +350,7 @@ export default function ChatDemo() {
             className="hidden sm:flex items-center gap-1.5 min-h-10 px-3 rounded-[var(--radius-md)] text-sm font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] border border-[var(--color-border)]"
           >
             <RotateCcw className="w-4 h-4" />
-            Yangi
+            {t('chat.new')}
           </button>
         </header>
 
@@ -362,10 +363,10 @@ export default function ChatDemo() {
             {showWelcomeExtras && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2 animate-fadeIn">
                 {[
-                  { icon: Building2, label: 'Bank & kredit' },
-                  { icon: Smartphone, label: 'Telefonlar' },
-                  { icon: Coffee, label: 'Yetkazib berish' },
-                  { icon: Shirt, label: 'Moda' },
+                  { icon: Building2, label: t('chat.categories.bank') },
+                  { icon: Smartphone, label: t('chat.categories.phones') },
+                  { icon: Coffee, label: t('chat.categories.delivery') },
+                  { icon: Shirt, label: t('chat.categories.fashion') },
                 ].map(({ icon: Icon, label }) => (
                   <div
                     key={label}
@@ -407,15 +408,16 @@ export default function ChatDemo() {
                     </p>
                   ) : (
                     <MarkdownMessage text={msg.text} inverted={false} />
-                  )}
+              )}
 
-                  {msg.sender === 'bot' && msg.ad?.match && msg.ad.tracking_url && (
+                {msg.sender === 'bot' && msg.ad?.match && msg.ad.tracking_url && (
                     <SponsoredCard
                       suggestion={msg.ad.suggestion}
                       campaignName={msg.ad.campaign_name}
                       categoryLabel={msg.ad.category_label}
                       trackingUrl={msg.ad.tracking_url}
-                      ctaLabel={msg.ad.cta_label || 'Batafsil'}
+                      ctaLabel={msg.ad.cta_label || t('chat.moreInfo')}
+                      label={t('chat.adLabel')}
                     />
                   )}
                 </div>
@@ -449,7 +451,7 @@ export default function ChatDemo() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Savolingizni yozing…"
+                placeholder={t('chat.inputPlaceholder')}
                 rows={1}
                 disabled={isTyping}
                 className="flex-1 bg-transparent text-[var(--color-text)] outline-none resize-none text-[15px] leading-[22px] py-2 placeholder:text-[var(--color-text-muted)] max-h-[140px] disabled:opacity-60"
@@ -459,14 +461,14 @@ export default function ChatDemo() {
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping}
                 className="shrink-0 flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] disabled:opacity-40 transition-all active:scale-95 mb-0.5"
-                aria-label="Yuborish"
+                aria-label={t('chat.send')}
               >
                 <Send className="w-5 h-5" />
               </button>
             </div>
 
             <div className="md:hidden flex gap-2 mt-2 overflow-x-auto scrollbar-hide pb-0.5">
-              {PROMPT_GROUPS.flatMap((g) => g.prompts.slice(0, 1)).map((q) => (
+              {promptGroups.flatMap((g) => g.prompts.slice(0, 1)).map((q) => (
                 <button
                   key={q}
                   type="button"
